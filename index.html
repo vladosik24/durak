@@ -37,7 +37,6 @@
     user-select: none;
   }
 
-  /* ── SCREENS ── */
   .screen { display: none; flex-direction: column; min-height: 100vh; }
   .screen.active { display: flex; }
 
@@ -50,10 +49,7 @@
     padding: 20px;
   }
 
-  .logo-area {
-    text-align: center;
-    margin-bottom: 32px;
-  }
+  .logo-area { text-align: center; margin-bottom: 28px; }
 
   .logo-title {
     font-family: 'Playfair Display', serif;
@@ -76,8 +72,7 @@
   .cards-deco {
     display: flex;
     justify-content: center;
-    gap: -8px;
-    margin: 16px 0 28px;
+    margin: 16px 0 24px;
   }
 
   .deco-card {
@@ -92,7 +87,7 @@
     border: 1px solid #ddd;
   }
 
-  .menu-section { width: 100%; max-width: 340px; margin-bottom: 20px; }
+  .menu-section { width: 100%; max-width: 340px; margin-bottom: 18px; }
 
   .section-label {
     font-size: 11px;
@@ -190,7 +185,6 @@
   }
   .back-btn:active { opacity: 0.7; }
 
-  /* ── TABLE ── */
   .game-table {
     flex: 1;
     display: flex;
@@ -200,19 +194,11 @@
     overflow: hidden;
   }
 
-  /* ── OPPONENT ── */
   .opponent-area {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 4px;
-  }
-
-  .player-label {
-    font-size: 11px;
-    color: var(--text2);
-    letter-spacing: 2px;
-    text-transform: uppercase;
   }
 
   .player-name {
@@ -230,7 +216,6 @@
     min-height: 72px;
   }
 
-  /* ── FIELD ── */
   .field-area {
     flex: 1;
     display: flex;
@@ -248,7 +233,7 @@
     margin-bottom: 4px;
   }
 
-  .trump-display {
+  .trump-display, .deck-display, .timer-display {
     display: flex;
     align-items: center;
     gap: 6px;
@@ -261,15 +246,20 @@
 
   .trump-suit { font-size: 20px; }
 
-  .deck-display {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    background: rgba(0,0,0,0.3);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 5px 10px;
-    font-size: 13px;
+  .timer-display {
+    color: var(--gold2);
+    font-variant-numeric: tabular-nums;
+    min-width: 52px;
+    justify-content: center;
+  }
+  .timer-display.urgent {
+    color: #e74c3c;
+    border-color: rgba(231,76,60,0.5);
+    animation: pulse-urgent 0.6s infinite;
+  }
+  @keyframes pulse-urgent {
+    0%,100% { opacity: 1; }
+    50% { opacity: 0.55; }
   }
 
   .attack-pairs {
@@ -291,13 +281,6 @@
     height: 68px;
   }
 
-  .card-pair .defense-card {
-    position: absolute;
-    top: 6px;
-    left: 6px;
-  }
-
-  /* ── STATUS ── */
   .status-bar {
     text-align: center;
     font-size: 13px;
@@ -309,7 +292,6 @@
     min-height: 24px;
   }
 
-  /* ── PLAYER HAND ── */
   .player-area {
     display: flex;
     flex-direction: column;
@@ -374,7 +356,6 @@
 
   .card:hover { transform: translateY(-6px); box-shadow: 2px 8px 16px var(--card-shadow); }
   .card.selected { transform: translateY(-10px); box-shadow: 0 0 0 2px var(--gold), 2px 10px 20px var(--card-shadow); }
-  .card.highlighted { box-shadow: 0 0 0 2px #4caf50; }
   .card.dimmed { opacity: 0.4; cursor: default; }
   .card.dimmed:hover { transform: none; }
 
@@ -398,13 +379,9 @@
     opacity: 0.3;
   }
 
-  /* hand overlap */
-  .hand-row .card, .hand-row .card-back {
-    margin-left: -14px;
-  }
+  .hand-row .card, .hand-row .card-back { margin-left: -14px; }
   .hand-row .card:first-child, .hand-row .card-back:first-child { margin-left: 0; }
 
-  /* ── ACTIONS ── */
   .action-row {
     display: flex;
     gap: 8px;
@@ -447,7 +424,7 @@
   .btn-attack:disabled { opacity: 0.3; cursor: default; }
   .btn-attack:not(:disabled):active { opacity: 0.7; }
 
-  /* ── MULTIPLAYER LOBBY ── */
+  /* ── LOBBY ── */
   #lobbyScreen {
     background: radial-gradient(ellipse at 50% 0%, #1a3a28 0%, #0a1f14 60%, #060e09 100%);
     align-items: center;
@@ -543,7 +520,6 @@
   .result-sub { font-size: 18px; color: var(--text2); text-align: center; }
   .result-detail { font-size: 14px; color: var(--text2); text-align: center; background: rgba(0,0,0,0.3); border-radius: 12px; padding: 12px 20px; border: 1px solid var(--border); }
 
-  /* ── TOAST ── */
   #toast {
     position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%);
     background: rgba(0,0,0,0.85); color: var(--text);
@@ -554,7 +530,6 @@
   }
   #toast.show { opacity: 1; }
 
-  /* ── MULTIPLAYER TABS ── */
   .mp-tabs { display: flex; gap: 8px; width: 100%; max-width: 340px; }
   .mp-tab {
     flex: 1; padding: 10px; text-align: center;
@@ -567,7 +542,6 @@
   .mp-panel { display: none; width: 100%; max-width: 340px; flex-direction: column; gap: 12px; }
   .mp-panel.active { display: flex; }
 
-  /* ── PASS CARDS (перекидний) ── */
   .pass-area {
     background: rgba(0,0,0,0.2);
     border: 1px dashed rgba(255,255,255,0.1);
@@ -581,15 +555,22 @@
   }
   .pass-label { font-size: 10px; color: var(--text2); letter-spacing: 2px; text-transform: uppercase; }
 
-  /* Trump card rotated in deck */
-  .trump-card-deck {
-    position: relative;
-    display: inline-block;
+  .timer-bar-wrap {
+    width: 100%;
+    max-width: 200px;
+    height: 3px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-top: 2px;
   }
-  .trump-card-deck .card {
-    transform: rotate(-90deg);
-    margin: 0;
+  .timer-bar {
+    height: 100%;
+    background: var(--gold);
+    width: 100%;
+    transition: width 0.25s linear;
   }
+  .timer-bar.urgent { background: #e74c3c; }
 </style>
 </head>
 <body>
@@ -649,6 +630,32 @@
     </div>
   </div>
 
+  <div class="menu-section">
+    <div class="section-label">Час на хід</div>
+    <div class="mode-grid">
+      <div class="opt-btn selected" data-timer="20" onclick="selectTimer(this,20)">
+        <span class="opt-icon">⏱</span>
+        <span class="opt-name">20 сек</span>
+        <span class="opt-desc">Звичайно</span>
+      </div>
+      <div class="opt-btn" data-timer="30" onclick="selectTimer(this,30)">
+        <span class="opt-icon">⏳</span>
+        <span class="opt-name">30 сек</span>
+        <span class="opt-desc">Спокійно</span>
+      </div>
+      <div class="opt-btn" data-timer="15" onclick="selectTimer(this,15)">
+        <span class="opt-icon">⚡</span>
+        <span class="opt-name">15 сек</span>
+        <span class="opt-desc">Швидко</span>
+      </div>
+      <div class="opt-btn" data-timer="0" onclick="selectTimer(this,0)">
+        <span class="opt-icon">∞</span>
+        <span class="opt-name">Без ліміту</span>
+        <span class="opt-desc">Без таймера</span>
+      </div>
+    </div>
+  </div>
+
   <button class="start-btn" onclick="startGame()">▶ Почати гру</button>
 </div>
 
@@ -661,7 +668,6 @@
     <div class="mp-tab" onclick="switchLobbyTab('join')">Приєднатись</div>
   </div>
 
-  <!-- CREATE -->
   <div class="mp-panel active" id="createPanel">
     <div class="room-code-display">
       <div class="room-code-label">Код кімнати</div>
@@ -678,7 +684,6 @@
     </div>
   </div>
 
-  <!-- JOIN -->
   <div class="mp-panel" id="joinPanel">
     <input class="join-input" id="joinCodeInput" placeholder="Введіть код кімнати" maxlength="4">
     <div class="lobby-btns">
@@ -697,7 +702,6 @@
   </div>
 
   <div class="game-table">
-    <!-- Opponent -->
     <div class="opponent-area">
       <div style="display:flex;align-items:center;gap:8px">
         <div class="player-name" id="oppName">Бот</div>
@@ -706,7 +710,6 @@
       <div class="hand-row" id="oppHand"></div>
     </div>
 
-    <!-- Field info -->
     <div class="field-area">
       <div class="field-info">
         <div class="trump-display">
@@ -717,20 +720,24 @@
           <span style="font-size:16px">🂠</span>
           <span id="deckCount" style="font-size:13px">36</span>
         </div>
+        <div class="timer-display" id="timerDisplay" style="display:none">
+          <span id="timerText">20</span>с
+        </div>
       </div>
 
-      <!-- Pass area (перекидний) -->
       <div class="pass-area" id="passArea" style="display:none">
         <div class="pass-label">Перекинуті</div>
         <div class="hand-row" id="passCards"></div>
       </div>
 
       <div class="attack-pairs" id="attackPairs"></div>
+      <div class="timer-bar-wrap" id="timerBarWrap" style="display:none">
+        <div class="timer-bar" id="timerBar"></div>
+      </div>
     </div>
 
     <div class="status-bar" id="statusBar">Ваш хід — атакуйте</div>
 
-    <!-- Player -->
     <div class="player-area">
       <div class="player-status">
         <div class="player-name">Ви</div>
@@ -770,34 +777,37 @@ if (tg) {
   tg.setHeaderColor('#0d1117');
   tg.setBackgroundColor('#0d1117');
 }
-
 const tgUser = tg?.initDataUnsafe?.user;
 
 // ═══════════════════════════════════════
 // STATE
 // ═══════════════════════════════════════
 let G = {
-  type: 'classic',   // classic|throwing|passing|tossing
-  mode: 'ai',        // ai|multi
+  type: 'classic',
+  mode: 'ai',
+  turnTime: 20,          // seconds, 0 = off
   deck: [],
   trump: null,
   trumpSuit: null,
   playerHand: [],
   oppHand: [],
-  table: [],         // [{attack, defense}]
-  passCards: [],     // перекидний
-  playerTurn: true,  // true = player attacks
-  phase: 'attack',   // attack|defense|take|over
-  deckCount: 0,
+  table: [],
+  passCards: [],
+  playerTurn: true,      // true = player is current attacker
+  phase: 'attack',       // attack | defense | over
   selectedCard: null,
   round: 0,
+  busy: false,           // AI is thinking / action locked
 };
 
 let multiPlayers = [];
 let roomCode = null;
+let timerId = null;
+let timerLeft = 0;
+let lobbyPollInterval = null;
 
 // ═══════════════════════════════════════
-// MENU SELECTIONS
+// MENU
 // ═══════════════════════════════════════
 function selectType(el, type) {
   document.querySelectorAll('[data-type]').forEach(b => b.classList.remove('selected'));
@@ -808,6 +818,11 @@ function selectMode(el, mode) {
   document.querySelectorAll('[data-mode]').forEach(b => b.classList.remove('selected'));
   el.classList.add('selected');
   G.mode = mode;
+}
+function selectTimer(el, sec) {
+  document.querySelectorAll('[data-timer]').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  G.turnTime = sec;
 }
 
 function startGame() {
@@ -820,10 +835,8 @@ function startGame() {
   }
 }
 
-// ═══════════════════════════════════════
-// SCREEN
-// ═══════════════════════════════════════
 function showScreen(id) {
+  stopTimer();
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
 }
@@ -832,28 +845,25 @@ function showScreen(id) {
 // DECK
 // ═══════════════════════════════════════
 const SUITS = ['♠','♥','♦','♣'];
-const SUIT_NAMES = { '♠':'spades','♥':'hearts','♦':'diamonds','♣':'clubs' };
 const RANKS = ['6','7','8','9','10','J','Q','K','A'];
 const RANK_VAL = {'6':0,'7':1,'8':2,'9':3,'10':4,'J':5,'Q':6,'K':7,'A':8};
 
 function buildDeck() {
-  let d = [];
-  for (let s of SUITS) for (let r of RANKS) d.push({suit:s, rank:r});
+  const d = [];
+  for (const s of SUITS) for (const r of RANKS) d.push({suit:s, rank:r});
   return shuffle(d);
 }
 
 function shuffle(arr) {
-  let a = [...arr];
-  for (let i = a.length-1; i>0; i--) {
-    let j = Math.floor(Math.random()*(i+1));
-    [a[i],a[j]] = [a[j],a[i]];
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
   }
   return a;
 }
 
-function cardStr(c) { return c.rank + c.suit; }
-
-function isRed(c) { return c.suit==='♥' || c.suit==='♦'; }
+function isRed(c) { return c.suit === '♥' || c.suit === '♦'; }
 
 function beats(attack, defense, trump) {
   if (defense.suit === attack.suit) return RANK_VAL[defense.rank] > RANK_VAL[attack.rank];
@@ -861,10 +871,20 @@ function beats(attack, defense, trump) {
   return false;
 }
 
+function tableRanks() {
+  const ranks = new Set();
+  G.table.forEach(p => {
+    ranks.add(p.attack.rank);
+    if (p.defense) ranks.add(p.defense.rank);
+  });
+  return [...ranks];
+}
+
 // ═══════════════════════════════════════
 // INIT GAME
 // ═══════════════════════════════════════
 function initGame() {
+  stopTimer();
   G.deck = buildDeck();
   G.playerHand = [];
   G.oppHand = [];
@@ -872,39 +892,120 @@ function initGame() {
   G.passCards = [];
   G.selectedCard = null;
   G.round = 0;
+  G.busy = false;
+  G.phase = 'attack';
 
-  // deal 6 each
-  for (let i=0;i<6;i++) {
+  for (let i = 0; i < 6; i++) {
     G.playerHand.push(G.deck.pop());
     G.oppHand.push(G.deck.pop());
   }
 
-  // trump = last card in deck (put back rotated)
+  // Trump is the bottom card of the remaining deck (face-up under the deck)
   G.trump = G.deck[0];
   G.trumpSuit = G.trump.suit;
-  G.deckCount = G.deck.length;
 
-  // who goes first — lowest trump or lowest card
   G.playerTurn = decideFirst();
-  G.phase = 'attack';
 
   updateTypeLabel();
   updateDeckDisplay();
   renderAll();
   updateStatus();
   updateButtons();
+
+  // CRITICAL FIX: start AI if bot goes first
+  if (!G.playerTurn) {
+    setTimeout(() => {
+      if (G.phase === 'attack' && !G.playerTurn) aiAttack();
+    }, 700);
+  } else {
+    startTimer();
+  }
 }
 
 function decideFirst() {
-  // find lowest trump in each hand
-  const pTrumps = G.playerHand.filter(c=>c.suit===G.trumpSuit).sort((a,b)=>RANK_VAL[a.rank]-RANK_VAL[b.rank]);
-  const oTrumps = G.oppHand.filter(c=>c.suit===G.trumpSuit).sort((a,b)=>RANK_VAL[a.rank]-RANK_VAL[b.rank]);
-  if (pTrumps.length && oTrumps.length) {
-    return RANK_VAL[pTrumps[0].rank] <= RANK_VAL[oTrumps[0].rank];
-  }
+  const pTrumps = G.playerHand.filter(c => c.suit === G.trumpSuit).sort((a,b) => RANK_VAL[a.rank] - RANK_VAL[b.rank]);
+  const oTrumps = G.oppHand.filter(c => c.suit === G.trumpSuit).sort((a,b) => RANK_VAL[a.rank] - RANK_VAL[b.rank]);
+  if (pTrumps.length && oTrumps.length) return RANK_VAL[pTrumps[0].rank] <= RANK_VAL[oTrumps[0].rank];
   if (pTrumps.length) return true;
   if (oTrumps.length) return false;
   return Math.random() < 0.5;
+}
+
+// ═══════════════════════════════════════
+// TIMER
+// ═══════════════════════════════════════
+function startTimer() {
+  stopTimer();
+  if (G.turnTime <= 0 || G.phase === 'over') return;
+
+  // Only run timer when it is player's turn to act
+  const playerMustAct = (G.playerTurn && G.phase === 'attack') || (!G.playerTurn && G.phase === 'defense');
+  if (!playerMustAct) return;
+
+  timerLeft = G.turnTime;
+  const disp = document.getElementById('timerDisplay');
+  const barWrap = document.getElementById('timerBarWrap');
+  const bar = document.getElementById('timerBar');
+  disp.style.display = 'flex';
+  barWrap.style.display = 'block';
+  updateTimerUI();
+
+  timerId = setInterval(() => {
+    timerLeft--;
+    updateTimerUI();
+    if (timerLeft <= 0) {
+      stopTimer();
+      onTimerExpired();
+    }
+  }, 1000);
+}
+
+function updateTimerUI() {
+  const text = document.getElementById('timerText');
+  const bar = document.getElementById('timerBar');
+  const disp = document.getElementById('timerDisplay');
+  text.textContent = Math.max(0, timerLeft);
+  const pct = G.turnTime > 0 ? (timerLeft / G.turnTime) * 100 : 0;
+  bar.style.width = pct + '%';
+  const urgent = timerLeft <= 5;
+  disp.classList.toggle('urgent', urgent);
+  bar.classList.toggle('urgent', urgent);
+}
+
+function stopTimer() {
+  if (timerId) {
+    clearInterval(timerId);
+    timerId = null;
+  }
+  document.getElementById('timerDisplay').style.display = 'none';
+  document.getElementById('timerBarWrap').style.display = 'none';
+}
+
+function onTimerExpired() {
+  if (G.phase === 'over' || G.busy) return;
+  toast('Час вийшов!');
+  if (G.playerTurn && G.phase === 'attack') {
+    // Must have already played at least one card to pass
+    if (G.table.length > 0) {
+      endRound(false);
+    } else {
+      // Forced to attack with weakest legal card
+      const legal = G.playerHand.filter(c => canPlay(c));
+      if (legal.length) {
+        const sorted = legal.sort((a,b) => {
+          const at = a.suit === G.trumpSuit ? 1 : 0;
+          const bt = b.suit === G.trumpSuit ? 1 : 0;
+          if (at !== bt) return at - bt;
+          return RANK_VAL[a.rank] - RANK_VAL[b.rank];
+        });
+        const idx = G.playerHand.indexOf(sorted[0]);
+        G.selectedCard = idx;
+        playerAttack();
+      }
+    }
+  } else if (!G.playerTurn && G.phase === 'defense') {
+    playerTake();
+  }
 }
 
 // ═══════════════════════════════════════
@@ -918,7 +1019,7 @@ function renderAll() {
   updateTurnBadges();
 }
 
-function renderCardEl(c, clickFn, extra='') {
+function renderCardEl(c, clickFn, extra = '') {
   const d = document.createElement('div');
   d.className = 'card' + (isRed(c) ? ' red-card' : '') + extra;
   d.innerHTML = `
@@ -939,12 +1040,14 @@ function renderOppHand() {
   const el = document.getElementById('oppHand');
   el.innerHTML = '';
   const n = G.oppHand.length;
-  for (let i=0;i<n;i++) {
+  for (let i = 0; i < n; i++) {
     const cb = document.createElement('div');
     cb.className = 'card-back';
     el.appendChild(cb);
   }
-  document.getElementById('oppName').textContent = G.mode === 'multi' ? 'Суперник' : 'Бот (' + n + ')';
+  document.getElementById('oppName').textContent = G.mode === 'multi'
+    ? (multiPlayers[1]?.name || 'Суперник') + ' (' + n + ')'
+    : 'Бот (' + n + ')';
 }
 
 function renderPlayerHand() {
@@ -954,36 +1057,30 @@ function renderPlayerHand() {
     let extra = '';
     if (G.selectedCard === i) extra = ' selected';
     else if (!canPlay(c)) extra = ' dimmed';
-    const cd = renderCardEl(c, () => selectCard(i), extra);
-    el.appendChild(cd);
+    el.appendChild(renderCardEl(c, () => selectCard(i), extra));
   });
 }
 
 function canPlay(c) {
-  if (G.phase === 'attack') {
+  if (G.busy || G.phase === 'over') return false;
+
+  if (G.phase === 'attack' && G.playerTurn) {
     if (G.table.length === 0) return true;
-    if (G.type === 'tossing' && G.table.some(p => p.defense == null)) {
-      // можна підкидати тільки якщо є така ж масть що вже на столі — переосмислено: перекидний = переводний по суті підкидання до непокритих
-      return tableRanks().includes(c.rank);
-    }
+    // Max 6 attack cards (or limited by defender hand in real rules; simplified)
+    if (G.table.length >= 6) return false;
     return tableRanks().includes(c.rank);
   }
-  if (G.phase === 'defense') {
+
+  if (G.phase === 'defense' && !G.playerTurn) {
     const uncovered = G.table.find(p => p.defense == null);
     if (!uncovered) return false;
-    if (G.type === 'passing' && c.rank === uncovered.attack.rank) return true; // переводний: однаковий ранг = переводить
+    // Passing variant: same rank transfers the attack
+    if (G.type === 'passing' && c.rank === uncovered.attack.rank) return true;
+    // Tossing: same rank can be used to "toss"
+    if (G.type === 'tossing' && c.rank === uncovered.attack.rank) return true;
     return beats(uncovered.attack, c, G.trumpSuit);
   }
   return false;
-}
-
-function tableRanks() {
-  const ranks = new Set();
-  G.table.forEach(p => {
-    ranks.add(p.attack.rank);
-    if (p.defense) ranks.add(p.defense.rank);
-  });
-  return [...ranks];
 }
 
 function renderTable() {
@@ -1002,13 +1099,15 @@ function renderTable() {
 
     const atk = renderCardEl(pair.attack, null, '');
     atk.style.position = 'absolute';
-    atk.style.top = '0'; atk.style.left = '0';
+    atk.style.top = '0';
+    atk.style.left = '0';
     pairEl.appendChild(atk);
 
     if (pair.defense) {
-      const def = renderCardEl(pair.defense, null, ' defense-card');
+      const def = renderCardEl(pair.defense, null, '');
       def.style.position = 'absolute';
-      def.style.top = '8px'; def.style.left = '12px';
+      def.style.top = '8px';
+      def.style.left = '12px';
       def.style.zIndex = '2';
       pairEl.appendChild(def);
     }
@@ -1029,14 +1128,13 @@ function renderPassCards() {
 }
 
 function updateTurnBadges() {
-  const isPlayerAttacking = G.playerTurn && G.phase === 'attack' || !G.playerTurn && G.phase === 'defense';
   const playerActive = (G.playerTurn && G.phase === 'attack') || (!G.playerTurn && G.phase === 'defense');
   document.getElementById('playerTurnBadge').style.display = playerActive ? 'block' : 'none';
   document.getElementById('oppTurnBadge').style.display = playerActive ? 'none' : 'block';
 }
 
 function updateTypeLabel() {
-  const names = {classic:'Звичайний',throwing:'Підкидний',passing:'Переводний',tossing:'Перекидний'};
+  const names = {classic:'Звичайний', throwing:'Підкидний', passing:'Переводний', tossing:'Перекидний'};
   document.getElementById('gameTypeLabel').textContent = names[G.type] || 'Дурак';
 }
 
@@ -1044,7 +1142,8 @@ function updateDeckDisplay() {
   document.getElementById('deckCount').textContent = G.deck.length;
   document.getElementById('deckCountLabel').textContent = '🂠 ' + G.deck.length;
   document.getElementById('trumpSuitDisplay').textContent = G.trumpSuit;
-  document.getElementById('trumpSuitDisplay').style.color = (G.trumpSuit==='♥'||G.trumpSuit==='♦') ? 'var(--red2)' : '#eee';
+  document.getElementById('trumpSuitDisplay').style.color =
+    (G.trumpSuit === '♥' || G.trumpSuit === '♦') ? 'var(--red2)' : '#eee';
 }
 
 function updateStatus() {
@@ -1052,16 +1151,13 @@ function updateStatus() {
   if (G.phase === 'attack') {
     el.textContent = G.playerTurn ? 'Ваш хід — атакуйте' : 'Бот атакує...';
   } else if (G.phase === 'defense') {
-    const type = G.type;
     if (!G.playerTurn) {
-      if (type === 'passing') el.textContent = 'Відбийтесь або переведіть удар';
-      else if (type === 'tossing') el.textContent = 'Відбийтесь або перекиньте карту';
+      if (G.type === 'passing') el.textContent = 'Відбийтесь або переведіть удар';
+      else if (G.type === 'tossing') el.textContent = 'Відбийтесь або перекиньте';
       else el.textContent = 'Відбийтесь від атаки';
     } else {
       el.textContent = 'Бот відбивається...';
     }
-  } else if (G.phase === 'take') {
-    el.textContent = 'Взяти всі карти зі столу';
   }
 }
 
@@ -1070,23 +1166,27 @@ function updateButtons() {
   const pass = document.getElementById('passBtn');
   const take = document.getElementById('takeBtn');
 
-  // Player can act?
-  const myTurnAttack = G.playerTurn && G.phase === 'attack';
-  const myTurnDefense = !G.playerTurn && G.phase === 'defense';
+  const myTurnAttack = G.playerTurn && G.phase === 'attack' && !G.busy;
+  const myTurnDefense = !G.playerTurn && G.phase === 'defense' && !G.busy;
   const canAct = myTurnAttack || myTurnDefense;
 
   atk.disabled = !(canAct && G.selectedCard !== null);
-  pass.style.opacity = canAct ? '1' : '0.4';
-  take.style.opacity = (!G.playerTurn && (G.phase === 'defense' || G.phase === 'take')) ? '1' : '0.4';
+  pass.style.opacity = canAct ? '1' : '0.35';
+  pass.style.pointerEvents = canAct ? 'auto' : 'none';
+  take.style.opacity = myTurnDefense ? '1' : '0.35';
+  take.style.pointerEvents = myTurnDefense ? 'auto' : 'none';
 
   if (myTurnAttack) {
     atk.textContent = G.table.length === 0 ? 'Атакувати' : 'Підкинути';
-    pass.textContent = G.table.length > 0 ? 'Пас' : 'Пас';
+    pass.textContent = 'Пас';
   } else if (myTurnDefense) {
     if (G.type === 'passing') atk.textContent = 'Відбити / Перевести';
     else if (G.type === 'tossing') atk.textContent = 'Відбити / Перекинути';
     else atk.textContent = 'Відбити';
     pass.textContent = 'Взяти';
+  } else {
+    atk.textContent = 'Атакувати';
+    pass.textContent = 'Пас';
   }
 }
 
@@ -1094,26 +1194,26 @@ function updateButtons() {
 // PLAYER ACTIONS
 // ═══════════════════════════════════════
 function selectCard(i) {
-  if (G.phase === 'over') return;
+  if (G.busy || G.phase === 'over') return;
   const playerActing = (G.playerTurn && G.phase === 'attack') || (!G.playerTurn && G.phase === 'defense');
   if (!playerActing) return;
+  if (!canPlay(G.playerHand[i])) return;
 
-  if (G.selectedCard === i) {
-    G.selectedCard = null;
-  } else {
-    G.selectedCard = i;
-  }
+  G.selectedCard = (G.selectedCard === i) ? null : i;
   renderPlayerHand();
   updateButtons();
 }
 
 function playerAttack() {
-  if (G.selectedCard === null) return;
+  if (G.busy || G.selectedCard === null) return;
   const card = G.playerHand[G.selectedCard];
+  if (!canPlay(card)) { toast('Цю карту не можна зіграти'); return; }
 
+  stopTimer();
+
+  // ── Player is attacker ──
   if (G.playerTurn && G.phase === 'attack') {
-    // attacking
-    G.table.push({attack: card, defense: null});
+    G.table.push({ attack: card, defense: null });
     G.playerHand.splice(G.selectedCard, 1);
     G.selectedCard = null;
     G.phase = 'defense';
@@ -1121,218 +1221,281 @@ function playerAttack() {
     updateStatus();
     updateButtons();
     // AI defends
-    setTimeout(aiDefend, 700);
+    setTimeout(aiDefend, 650);
+    return;
+  }
 
-  } else if (!G.playerTurn && G.phase === 'defense') {
-    // player defends
-    const uncovered = G.table.find(p=>p.defense==null);
+  // ── Player is defender ──
+  if (!G.playerTurn && G.phase === 'defense') {
+    const uncovered = G.table.find(p => p.defense == null);
     if (!uncovered) return;
 
-    // переводний — перевод
-    if (G.type === 'passing' && card.rank === uncovered.attack.rank) {
-      // перевод: додаємо як нову атаку
-      G.table.push({attack: card, defense: null});
+    // Passing / tossing transfer
+    if ((G.type === 'passing' || G.type === 'tossing') && card.rank === uncovered.attack.rank) {
+      G.table.push({ attack: card, defense: null });
       G.playerHand.splice(G.selectedCard, 1);
       G.selectedCard = null;
-      toast('Переведено удар!');
-      // тепер бот має відбиватись (ролі не міняються — атакуючий стає тим хто захищається? Ні, переводний: захисник переводить, атакуючий тепер захисник)
-      G.playerTurn = true; // тепер бот захищається? Ні. Якщо гравець перевів — бот захищається.
-      // насправді: якщо гравець відбивається і переводить, то бот стає захисником
-      G.playerTurn = false; // залишаємо, але тепер бот захисник
-      // Спростимо: бот бере якщо переведено
+      toast(G.type === 'passing' ? 'Удар переведено!' : 'Карту перекинуто!');
+      // After transfer the original attacker (bot) must now defend the new cards
+      // In 1v1 we keep playerTurn=false so bot is still the "attacker" side for status,
+      // but actually bot has to beat the new attack → we call aiDefend which expects G.playerTurn=true.
+      // Simplification for 1v1: treat transfer as adding another attack that bot must beat.
+      // Correct 1v1 model: after transfer roles stay, bot defends the whole table.
+      // We force G.playerTurn = true so aiDefend runs (bot defends).
+      G.playerTurn = true;
       G.phase = 'defense';
-      renderAll(); updateStatus(); updateButtons();
-      setTimeout(aiDefend, 700);
+      renderAll();
+      updateStatus();
+      updateButtons();
+      setTimeout(aiDefend, 650);
       return;
     }
 
     if (!beats(uncovered.attack, card, G.trumpSuit)) {
-      toast('Ця карта не б\'є!'); return;
+      toast('Ця карта не б\'є!');
+      return;
     }
+
     uncovered.defense = card;
     G.playerHand.splice(G.selectedCard, 1);
     G.selectedCard = null;
 
-    const stillUncovered = G.table.some(p=>p.defense==null);
+    const stillUncovered = G.table.some(p => p.defense == null);
     if (!stillUncovered) {
-      // all defended — attacker can throw more (підкидний)
-      if (G.type === 'throwing' || G.type === 'classic') {
+      // All covered → attacker (bot) may throw more
+      if (G.type === 'throwing' || G.type === 'classic' || G.type === 'tossing') {
         G.phase = 'attack';
-        // attacker is bot (G.playerTurn = false means bot attacked)
-        renderAll(); updateStatus(); updateButtons();
-        setTimeout(aiThrow, 700);
+        renderAll();
+        updateStatus();
+        updateButtons();
+        setTimeout(aiThrow, 650);
       } else {
         endRound(false);
       }
     } else {
-      renderAll(); updateStatus(); updateButtons();
+      renderAll();
+      updateStatus();
+      updateButtons();
+      startTimer();
     }
   }
 }
 
 function playerPass() {
+  if (G.busy) return;
   if (G.playerTurn && G.phase === 'attack') {
     if (G.table.length === 0) { toast('Спочатку атакуйте!'); return; }
-    // Пас при атаці — завершити раунд, бот відбився
+    stopTimer();
     endRound(false);
   } else if (!G.playerTurn && G.phase === 'defense') {
-    // Гравець хоче взяти
     playerTake();
   }
 }
 
 function playerTake() {
+  if (G.busy) return;
   if (G.playerTurn) { toast('Ви атакуєте — не можна брати'); return; }
-  if (G.phase !== 'defense' && G.phase !== 'take') return;
+  if (G.phase !== 'defense') return;
 
-  // collect all table cards
+  stopTimer();
   G.table.forEach(p => {
     G.playerHand.push(p.attack);
     if (p.defense) G.playerHand.push(p.defense);
   });
   G.passCards.forEach(c => G.playerHand.push(c));
-  G.table = []; G.passCards = [];
-
+  G.table = [];
+  G.passCards = [];
   toast('Ви взяли карти');
-  endRound(true); // true = defender took
+  endRound(true);
 }
 
 // ═══════════════════════════════════════
-// AI LOGIC
+// AI LOGIC (fixed)
 // ═══════════════════════════════════════
 function aiAttack() {
-  if (G.phase !== 'attack' || G.playerTurn) return;
-  if (G.oppHand.length === 0) { checkWin(); return; }
+  if (G.phase !== 'attack' || G.playerTurn || G.busy) return;
+  G.busy = true;
+  stopTimer();
 
-  const ranks = tableRanks();
+  if (G.oppHand.length === 0) {
+    G.busy = false;
+    checkWin();
+    return;
+  }
+
   let card = null;
-
   if (G.table.length === 0) {
-    // перша атака — найслабша не козирна
-    const nonTrumps = G.oppHand.filter(c=>c.suit!==G.trumpSuit).sort((a,b)=>RANK_VAL[a.rank]-RANK_VAL[b.rank]);
-    card = nonTrumps[0] || G.oppHand.sort((a,b)=>RANK_VAL[a.rank]-RANK_VAL[b.rank])[0];
+    // First attack: prefer lowest non-trump
+    const nonTrumps = G.oppHand
+      .filter(c => c.suit !== G.trumpSuit)
+      .sort((a,b) => RANK_VAL[a.rank] - RANK_VAL[b.rank]);
+    card = nonTrumps[0] || [...G.oppHand].sort((a,b) => RANK_VAL[a.rank] - RANK_VAL[b.rank])[0];
   } else {
-    // підкидаємо за рангом
-    const matching = G.oppHand.filter(c=>ranks.includes(c.rank));
-    const nonTrumps = matching.filter(c=>c.suit!==G.trumpSuit).sort((a,b)=>RANK_VAL[a.rank]-RANK_VAL[b.rank]);
-    card = nonTrumps[0] || matching.sort((a,b)=>RANK_VAL[a.rank]-RANK_VAL[b.rank])[0];
+    // Throw matching ranks, prefer non-trump lowest
+    const ranks = tableRanks();
+    const matching = G.oppHand.filter(c => ranks.includes(c.rank));
+    const nonTrumps = matching
+      .filter(c => c.suit !== G.trumpSuit)
+      .sort((a,b) => RANK_VAL[a.rank] - RANK_VAL[b.rank]);
+    card = nonTrumps[0] || matching.sort((a,b) => RANK_VAL[a.rank] - RANK_VAL[b.rank])[0] || null;
   }
 
   if (!card) {
-    // cannot attack
+    G.busy = false;
     endRound(false);
     return;
   }
 
   const idx = G.oppHand.indexOf(card);
-  G.oppHand.splice(idx,1);
-  G.table.push({attack:card, defense:null});
+  G.oppHand.splice(idx, 1);
+  G.table.push({ attack: card, defense: null });
   G.phase = 'defense';
-  renderAll(); updateStatus(); updateButtons();
+  G.busy = false;
+  renderAll();
+  updateStatus();
+  updateButtons();
+  startTimer(); // player's turn to defend
 }
 
 function aiDefend() {
-  if (G.phase !== 'defense' || !G.playerTurn) return;
+  // Bot defends when player is the attacker (G.playerTurn === true)
+  if (G.phase !== 'defense' || !G.playerTurn || G.busy) return;
+  G.busy = true;
+  stopTimer();
 
-  const uncovered = G.table.find(p=>p.defense==null);
-  if (!uncovered) { endRound(false); return; }
+  const uncovered = G.table.find(p => p.defense == null);
+  if (!uncovered) {
+    G.busy = false;
+    endRound(false);
+    return;
+  }
 
-  // find best beating card
-  const candidates = G.oppHand.filter(c=>beats(uncovered.attack, c, G.trumpSuit));
-  candidates.sort((a,b) => {
-    // prefer non-trump
-    if (a.suit===G.trumpSuit && b.suit!==G.trumpSuit) return 1;
-    if (b.suit===G.trumpSuit && a.suit!==G.trumpSuit) return -1;
-    return RANK_VAL[a.rank]-RANK_VAL[b.rank];
-  });
+  // Prefer lowest non-trump that beats
+  const candidates = G.oppHand
+    .filter(c => beats(uncovered.attack, c, G.trumpSuit))
+    .sort((a,b) => {
+      const at = a.suit === G.trumpSuit ? 1 : 0;
+      const bt = b.suit === G.trumpSuit ? 1 : 0;
+      if (at !== bt) return at - bt;
+      return RANK_VAL[a.rank] - RANK_VAL[b.rank];
+    });
 
-  // переводний: може перевести
-  if (G.type === 'passing') {
-    const passing = G.oppHand.find(c=>c.rank===uncovered.attack.rank);
-    if (passing && candidates.length === 0) {
-      // перевод
-      G.table.push({attack:passing, defense:null});
-      const i = G.oppHand.indexOf(passing);
-      G.oppHand.splice(i,1);
-      toast('Бот переводить удар!');
-      G.playerTurn = false; // тепер гравець захищається знову (новий напад)
+  // Passing: try to transfer if no good beat
+  if (G.type === 'passing' || G.type === 'tossing') {
+    const transfer = G.oppHand.find(c => c.rank === uncovered.attack.rank && c !== candidates[0]);
+    if (transfer && (candidates.length === 0 || Math.random() < 0.35)) {
+      G.table.push({ attack: transfer, defense: null });
+      const i = G.oppHand.indexOf(transfer);
+      G.oppHand.splice(i, 1);
+      toast(G.type === 'passing' ? 'Бот переводить удар!' : 'Бот перекидає!');
+      // After transfer player must defend again
+      G.playerTurn = false;
       G.phase = 'defense';
-      renderAll(); updateStatus(); updateButtons();
+      G.busy = false;
+      renderAll();
+      updateStatus();
+      updateButtons();
+      startTimer();
       return;
     }
   }
 
   if (candidates.length === 0) {
-    // AI takes
+    // Bot takes
     toast('Бот бере карти');
-    G.table.forEach(p=>{
+    G.table.forEach(p => {
       G.oppHand.push(p.attack);
-      if(p.defense) G.oppHand.push(p.defense);
+      if (p.defense) G.oppHand.push(p.defense);
     });
-    G.passCards.forEach(c=>G.oppHand.push(c));
-    G.table=[]; G.passCards=[];
+    G.passCards.forEach(c => G.oppHand.push(c));
+    G.table = [];
+    G.passCards = [];
+    G.busy = false;
     endRound(true);
     return;
   }
 
   const chosen = candidates[0];
   const idx = G.oppHand.indexOf(chosen);
-  G.oppHand.splice(idx,1);
+  G.oppHand.splice(idx, 1);
   uncovered.defense = chosen;
 
-  const stillUncov = G.table.some(p=>p.defense==null);
+  const stillUncov = G.table.some(p => p.defense == null);
+  G.busy = false;
+
   if (!stillUncov) {
-    if (G.type === 'throwing' || G.type === 'classic') {
+    if (G.type === 'throwing' || G.type === 'classic' || G.type === 'tossing') {
       G.phase = 'attack';
-      renderAll(); updateStatus(); updateButtons();
-      // player can throw more — player's turn (they're attacker)
+      renderAll();
+      updateStatus();
+      updateButtons();
+      startTimer(); // player may throw more
     } else {
       endRound(false);
     }
   } else {
-    renderAll(); updateStatus(); updateButtons();
+    // Still uncovered cards – bot continues defending automatically
+    renderAll();
+    updateStatus();
+    updateButtons();
+    setTimeout(aiDefend, 500);
   }
 }
 
 function aiThrow() {
-  // AI підкидає (якщо бот атакував перший)
-  if (!G.playerTurn || G.phase !== 'attack') return;
-  if (G.table.length === 0) return;
+  // Bot is attacker → G.playerTurn must be false
+  if (G.playerTurn || G.phase !== 'attack' || G.busy) return;
+  G.busy = true;
+  stopTimer();
+
+  if (G.table.length === 0 || G.table.length >= 6) {
+    G.busy = false;
+    endRound(false);
+    return;
+  }
 
   const ranks = tableRanks();
-  const matching = G.oppHand.filter(c=>ranks.includes(c.rank));
-  const nonTrumps = matching.filter(c=>c.suit!==G.trumpSuit);
-  const toThrow = nonTrumps[0] || null;
+  const matching = G.oppHand.filter(c => ranks.includes(c.rank));
+  const nonTrumps = matching
+    .filter(c => c.suit !== G.trumpSuit)
+    .sort((a,b) => RANK_VAL[a.rank] - RANK_VAL[b.rank]);
+  const toThrow = nonTrumps[0] || matching.sort((a,b) => RANK_VAL[a.rank] - RANK_VAL[b.rank])[0] || null;
 
-  if (!toThrow || G.table.length >= 6) {
+  if (!toThrow) {
+    G.busy = false;
     endRound(false);
     return;
   }
 
   const idx = G.oppHand.indexOf(toThrow);
-  G.oppHand.splice(idx,1);
-  G.table.push({attack:toThrow, defense:null});
-  G.phase='defense';
-  renderAll(); updateStatus(); updateButtons();
+  G.oppHand.splice(idx, 1);
+  G.table.push({ attack: toThrow, defense: null });
+  G.phase = 'defense';
+  G.busy = false;
+  renderAll();
+  updateStatus();
+  updateButtons();
+  startTimer(); // player defends
 }
 
 // ═══════════════════════════════════════
 // ROUND END
 // ═══════════════════════════════════════
 function endRound(defenderTook) {
+  stopTimer();
   G.round++;
   G.table = [];
   G.passCards = [];
   G.selectedCard = null;
+  G.busy = false;
 
-  // refill hands
   refillHands();
 
   if (!defenderTook) {
-    // успішний захист — захисник стає атакуючим
+    // Successful defence → defender becomes new attacker
     G.playerTurn = !G.playerTurn;
   }
-  // якщо взяв — атакуючий той самий
+  // If defender took → same attacker continues
 
   G.phase = 'attack';
 
@@ -1344,20 +1507,21 @@ function endRound(defenderTook) {
   updateDeckDisplay();
 
   if (!G.playerTurn) {
-    setTimeout(aiAttack, 800);
+    setTimeout(aiAttack, 700);
+  } else {
+    startTimer();
   }
 }
 
 function refillHands() {
-  // attacker fills first
-  const order = G.playerTurn ? ['player','opp'] : ['opp','player'];
+  // Attacker draws first
+  const order = G.playerTurn ? ['player', 'opp'] : ['opp', 'player'];
   for (const who of order) {
     const hand = who === 'player' ? G.playerHand : G.oppHand;
     while (hand.length < 6 && G.deck.length > 0) {
       hand.push(G.deck.pop());
     }
   }
-  G.deckCount = G.deck.length;
 }
 
 function checkWin() {
@@ -1371,49 +1535,56 @@ function checkWin() {
 }
 
 function showResult(outcome) {
+  stopTimer();
   G.phase = 'over';
-  const icons = {win:'🏆', lose:'🤡', draw:'🤝'};
-  const titles = {win:'Перемога!', lose:'Дурак!', draw:'Нічия!'};
-  const subs = {win:'Ви виграли гру', lose:'Ви залишились з картами', draw:'Обидва гравці вийшли одночасно'};
+  const icons = { win:'🏆', lose:'🤡', draw:'🤝' };
+  const titles = { win:'Перемога!', lose:'Дурак!', draw:'Нічия!' };
+  const subs = {
+    win: 'Ви виграли гру',
+    lose: 'Ви залишились з картами',
+    draw: 'Обидва гравці вийшли одночасно'
+  };
   document.getElementById('resultIcon').textContent = icons[outcome];
   document.getElementById('resultTitle').textContent = titles[outcome];
   document.getElementById('resultSub').textContent = subs[outcome];
-  document.getElementById('resultDetail').textContent = `Зіграно раундів: ${G.round} • Варіант: ${document.getElementById('gameTypeLabel').textContent}`;
+  document.getElementById('resultDetail').textContent =
+    `Зіграно раундів: ${G.round} • Варіант: ${document.getElementById('gameTypeLabel').textContent}`;
   showScreen('resultScreen');
 }
 
 function playAgain() {
-  if (G.mode === 'ai') { initGame(); showScreen('gameScreen'); }
-  else showScreen('menuScreen');
+  if (G.mode === 'ai') {
+    initGame();
+    showScreen('gameScreen');
+  } else {
+    showScreen('menuScreen');
+  }
 }
 
 function confirmBack() {
   if (G.phase !== 'over' && G.round > 0) {
     if (!confirm('Покинути гру?')) return;
   }
+  stopTimer();
   showScreen('menuScreen');
 }
 
 // ═══════════════════════════════════════
-// MULTIPLAYER (P2P via BroadcastChannel / localStorage simulation)
+// MULTIPLAYER (localStorage simulation)
 // ═══════════════════════════════════════
 function initMultiLobby() {
   roomCode = generateRoomCode();
   document.getElementById('roomCodeDisplay').textContent = roomCode;
-  multiPlayers = [{name: tgUser?.first_name || 'Ви', id: tgUser?.id || 'local', host: true}];
+  multiPlayers = [{ name: tgUser?.first_name || 'Ви', id: tgUser?.id || 'local', host: true }];
   updatePlayersList();
   document.getElementById('startMultiBtn').disabled = false;
   document.getElementById('startMultiBtn').style.opacity = '1';
 
-  // Store room in localStorage for local multi-device simulation
   const roomData = { code: roomCode, host: multiPlayers[0].name, players: multiPlayers, gameType: G.type };
   localStorage.setItem('durak_room_' + roomCode, JSON.stringify(roomData));
-
-  // Poll for players
   startLobbyPoll();
 }
 
-let lobbyPollInterval = null;
 function startLobbyPoll() {
   if (lobbyPollInterval) clearInterval(lobbyPollInterval);
   lobbyPollInterval = setInterval(() => {
@@ -1436,10 +1607,9 @@ function updatePlayersList() {
   multiPlayers.forEach(p => {
     const item = document.createElement('div');
     item.className = 'player-item';
-    item.innerHTML = `<div class="pi-dot"></div><div>${p.name}${p.host?' 👑':''}</div>`;
+    item.innerHTML = `<div class="pi-dot"></div><div>${p.name}${p.host ? ' 👑' : ''}</div>`;
     el.appendChild(item);
   });
-  // Waiting slot
   if (multiPlayers.length < 4) {
     const wait = document.createElement('div');
     wait.className = 'player-item';
@@ -1452,14 +1622,16 @@ function updatePlayersList() {
 function generateRoomCode() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   let code = '';
-  for (let i=0;i<4;i++) code += chars[Math.floor(Math.random()*chars.length)];
+  for (let i = 0; i < 4; i++) code += chars[Math.floor(Math.random() * chars.length)];
   return code;
 }
 
 function switchLobbyTab(tab) {
-  document.querySelectorAll('.mp-tab').forEach((t,i) => t.classList.toggle('active', (i===0&&tab==='create')||(i===1&&tab==='join')));
-  document.getElementById('createPanel').classList.toggle('active', tab==='create');
-  document.getElementById('joinPanel').classList.toggle('active', tab==='join');
+  document.querySelectorAll('.mp-tab').forEach((t, i) =>
+    t.classList.toggle('active', (i === 0 && tab === 'create') || (i === 1 && tab === 'join'))
+  );
+  document.getElementById('createPanel').classList.toggle('active', tab === 'create');
+  document.getElementById('joinPanel').classList.toggle('active', tab === 'join');
 }
 
 function joinRoom() {
@@ -1472,7 +1644,11 @@ function joinRoom() {
   const room = JSON.parse(data);
   if (room.players.length >= 4) { toast('Кімната повна'); return; }
 
-  const newPlayer = {name: tgUser?.first_name || 'Гравець ' + (room.players.length+1), id: tgUser?.id || Date.now(), host: false};
+  const newPlayer = {
+    name: tgUser?.first_name || 'Гравець ' + (room.players.length + 1),
+    id: tgUser?.id || Date.now(),
+    host: false
+  };
   room.players.push(newPlayer);
   localStorage.setItem('durak_room_' + code, JSON.stringify(room));
 
@@ -1492,8 +1668,6 @@ function copyRoomCode() {
   } else {
     toast('Код: ' + roomCode);
   }
-
-  // Also share via Telegram if available
   if (tg?.switchInlineQuery) {
     tg.switchInlineQuery('Приєднуйся до гри Дурак! Код: ' + roomCode);
   }
@@ -1501,13 +1675,13 @@ function copyRoomCode() {
 
 function startMultiGame() {
   if (lobbyPollInterval) clearInterval(lobbyPollInterval);
-  // For local multi: start AI game with multiplayer naming
   toast('Починаємо гру!');
   setTimeout(() => {
     initGame();
-    document.getElementById('oppName').textContent = multiPlayers.length > 1 ? multiPlayers[1].name : 'Суперник';
+    document.getElementById('oppName').textContent =
+      multiPlayers.length > 1 ? multiPlayers[1].name : 'Суперник';
     showScreen('gameScreen');
-  }, 500);
+  }, 400);
 }
 
 // ═══════════════════════════════════════
@@ -1524,8 +1698,8 @@ function toast(msg) {
 // ═══════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════
-document.getElementById('joinCodeInput').addEventListener('input', function() {
-  this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g,'');
+document.getElementById('joinCodeInput').addEventListener('input', function () {
+  this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
 });
 </script>
 </body>
