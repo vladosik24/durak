@@ -6,6 +6,8 @@
 <title>Дурак 🃏</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-database-compat.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Crimson+Pro:wght@400;600&display=swap');
 
@@ -672,6 +674,36 @@
   }
   .conn-dot.off { background: var(--text2); }
   .conn-dot.wait { background: #e8c97a; animation: pulse 1.2s infinite; }
+
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; z-index: 2000;
+    background: rgba(0,0,0,0.75); align-items: center; justify-content: center;
+    padding: 16px;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal-box {
+    background: #0f1f16; border: 1px solid var(--border); border-radius: 16px;
+    padding: 20px; max-width: 400px; width: 100%; max-height: 90vh; overflow-y: auto;
+  }
+  .modal-box h3 {
+    font-family: 'Playfair Display', serif; color: var(--gold); font-size: 20px;
+    margin-bottom: 12px; text-align: center;
+  }
+  .modal-box p { font-size: 13px; color: var(--text2); margin-bottom: 10px; line-height: 1.4; }
+  .modal-box label { font-size: 11px; color: var(--gold); letter-spacing: 1px; text-transform: uppercase; display: block; margin: 10px 0 4px; }
+  .modal-box textarea, .modal-box input {
+    width: 100%; background: rgba(255,255,255,0.06); border: 1px solid var(--border);
+    border-radius: 10px; padding: 10px; color: var(--text); font-family: monospace; font-size: 12px;
+    outline: none; resize: vertical;
+  }
+  .modal-box textarea:focus, .modal-box input:focus { border-color: var(--gold); }
+  .modal-actions { display: flex; gap: 8px; margin-top: 16px; }
+  .backend-badge {
+    font-size: 11px; padding: 3px 8px; border-radius: 8px; display: inline-block;
+    margin-top: 4px;
+  }
+  .backend-badge.fb { background: rgba(255,196,0,0.15); color: #ffc400; border: 1px solid rgba(255,196,0,0.3); }
+  .backend-badge.p2p { background: rgba(76,175,80,0.12); color: #81c784; border: 1px solid rgba(76,175,80,0.3); }
 </style>
 </head>
 <body>
@@ -789,6 +821,8 @@
 <!-- LOBBY -->
 <div id="lobbyScreen" class="screen">
   <div class="lobby-title">Мультиплеєр</div>
+  <div id="backendBadge" class="backend-badge p2p">P2P (PeerJS)</div>
+  <button class="secondary-btn" style="max-width:340px;padding:8px;font-size:13px" onclick="openFbModal()">⚙ Налаштувати Firebase (стабільніше)</button>
 
   <div class="mp-tabs">
     <div class="mp-tab active" onclick="switchLobbyTab('create')">Створити</div>
@@ -894,6 +928,34 @@
 </div>
 
 <div id="toast"></div>
+
+<!-- Firebase setup modal -->
+<div class="modal-overlay" id="fbModal">
+  <div class="modal-box">
+    <h3>Firebase (mafia-bot-d736c)</h3>
+    <p>Підключи свій існуючий проєкт. Дані Дурака зберігаються окремо: <code style="color:var(--gold2)">durak/rooms/</code></p>
+    <p>1. <a href="https://console.firebase.google.com/project/mafia-bot-d736c/settings/general" target="_blank" style="color:var(--gold)">Project settings</a> → Your apps → Web<br>
+    2. Скопіюй увесь <b>firebaseConfig</b> (або «SDK setup and configuration» → Config)<br>
+    3. Встав нижче → Зберегти</p>
+    <label>firebaseConfig (JSON)</label>
+    <textarea id="fbConfigInput" rows="10" placeholder='{
+  "apiKey": "AIza...",
+  "authDomain": "mafia-bot-d736c.firebaseapp.com",
+  "databaseURL": "https://mafia-bot-d736c-default-rtdb.firebaseio.com",
+  "projectId": "mafia-bot-d736c",
+  "storageBucket": "mafia-bot-d736c.appspot.com",
+  "messagingSenderId": "...",
+  "appId": "..."
+}'></textarea>
+    <p style="margin-top:8px;font-size:12px">У <a href="https://console.firebase.google.com/project/mafia-bot-d736c/database/mafia-bot-d736c-default-rtdb/rules" target="_blank" style="color:var(--gold)">Rules</a> додай доступ для дурака, наприклад:<br>
+    <code style="color:var(--gold2)">"durak": { ".read": true, ".write": true }</code></p>
+    <div class="modal-actions">
+      <button class="start-btn" style="flex:1;margin:0;font-size:15px;padding:12px" onclick="saveFirebaseConfig()">Зберегти</button>
+      <button class="secondary-btn" style="flex:1;margin:0" onclick="clearFirebaseConfig()">Скинути</button>
+    </div>
+    <button class="secondary-btn" style="margin-top:8px" onclick="closeFbModal()">Закрити</button>
+  </div>
+</div>
 
 <script>
 // ═══════════════════════════════════════
@@ -1006,6 +1068,8 @@ function toggleSound(el) {
 
 function startGame() {
   if (G.mode === 'multi') {
+    try { initFirebaseFromStorage(); } catch(e) {}
+    updateBackendBadge();
     initMultiLobby();
     showScreen('lobbyScreen');
   } else {
@@ -1828,14 +1892,45 @@ function confirmBack() {
 }
 
 // ═══════════════════════════════════════
-// ONLINE MULTIPLAYER (PeerJS P2P)
+// ONLINE MULTIPLAYER (Firebase + PeerJS)
 // ═══════════════════════════════════════
 let peer = null;
-let conn = null;           // DataConnection to the other player
+let conn = null;
 let isHost = false;
-let mySeat = 0;            // 0 = host side, 1 = guest side
+let mySeat = 0;
 let onlineNames = { 0: 'Хост', 1: 'Гість' };
 let dealingAnim = false;
+let netBackend = 'p2p'; // 'p2p' | 'firebase'
+let fbApp = null;
+let fbDb = null;
+let fbRoomRef = null;
+let fbUnsub = null;
+let fbActionUnsub = null;
+let myPlayerId = null;
+
+const PEER_CONFIG = {
+  host: '0.peerjs.com',
+  port: 443,
+  path: '/',
+  secure: true,
+  debug: 1,
+  config: {
+    iceServers: [
+      { urls: 'stun:stun.l.google.com:19302' },
+      { urls: 'stun:stun1.l.google.com:19302' },
+      { urls: 'stun:stun2.l.google.com:19302' },
+      {
+        urls: [
+          'turn:openrelay.metered.ca:80',
+          'turn:openrelay.metered.ca:443',
+          'turn:openrelay.metered.ca:443?transport=tcp'
+        ],
+        username: 'openrelayproject',
+        credential: 'openrelayproject'
+      }
+    ]
+  }
+};
 
 function generateRoomCode() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -1855,11 +1950,112 @@ function setLobbyStatus(msg, cls) {
   if (je) { je.textContent = msg; je.className = 'lobby-status' + (cls ? ' ' + cls : ''); }
 }
 
+function updateBackendBadge() {
+  const el = document.getElementById('backendBadge');
+  if (!el) return;
+  if (netBackend === 'firebase' && fbDb) {
+    el.className = 'backend-badge fb';
+    el.textContent = 'Firebase (стабільний)';
+  } else {
+    el.className = 'backend-badge p2p';
+    el.textContent = 'P2P + TURN (PeerJS)';
+  }
+}
+
+function openFbModal() {
+  let raw = localStorage.getItem('durak_fb_config') || '';
+  if (!raw) {
+    raw = JSON.stringify(DEFAULT_FB_CONFIG, null, 2);
+  }
+  document.getElementById('fbConfigInput').value = raw;
+  document.getElementById('fbModal').classList.add('show');
+}
+function closeFbModal() {
+  document.getElementById('fbModal').classList.remove('show');
+}
+
+function saveFirebaseConfig() {
+  const raw = document.getElementById('fbConfigInput').value.trim();
+  if (!raw) { toast('Вставте firebaseConfig'); return; }
+  try {
+    const cfg = JSON.parse(raw);
+    if (!cfg.apiKey || !cfg.databaseURL) throw new Error('Потрібні apiKey і databaseURL');
+    localStorage.setItem('durak_fb_config', JSON.stringify(cfg));
+    initFirebaseFromStorage();
+    toast('Firebase збережено!');
+    closeFbModal();
+    updateBackendBadge();
+  } catch (e) {
+    toast('Помилка JSON: ' + e.message);
+  }
+}
+
+function clearFirebaseConfig() {
+  localStorage.removeItem('durak_fb_config');
+  fbApp = null;
+  fbDb = null;
+  netBackend = 'p2p';
+  updateBackendBadge();
+  toast('Firebase скинуто — використовується P2P');
+  closeFbModal();
+}
+
+const DEFAULT_FB_CONFIG = {
+  apiKey: "AIzaSyD733ecBu7udRaZrDJoou8R4ssoWRvWk5Y",
+  authDomain: "mafia-bot-d736c.firebaseapp.com",
+  databaseURL: "https://mafia-bot-d736c-default-rtdb.firebaseio.com",
+  projectId: "mafia-bot-d736c",
+  storageBucket: "mafia-bot-d736c.firebasestorage.app",
+  messagingSenderId: "511710109912",
+  appId: "1:511710109912:web:78226030c92350ba4537ad",
+  measurementId: "G-Z7WBGQ3467"
+};
+
+function initFirebaseFromStorage() {
+  let cfg = null;
+  const raw = localStorage.getItem('durak_fb_config');
+  if (raw) {
+    try { cfg = JSON.parse(raw); } catch (e) { cfg = null; }
+  }
+  if (!cfg || !cfg.apiKey || cfg.apiKey.indexOf('ВСТАВ') === 0) {
+    cfg = DEFAULT_FB_CONFIG;
+    try { localStorage.setItem('durak_fb_config', JSON.stringify(cfg)); } catch (e) {}
+  }
+  try {
+    if (fbApp) {
+      netBackend = 'firebase';
+      return true;
+    }
+    fbApp = firebase.initializeApp(cfg);
+    fbDb = firebase.database();
+    netBackend = 'firebase';
+    return true;
+  } catch (e) {
+    console.error(e);
+    if (String(e.message || e).includes('already exists')) {
+      try {
+        fbApp = firebase.app();
+        fbDb = firebase.database();
+        netBackend = 'firebase';
+        return true;
+      } catch (e2) {}
+    }
+    netBackend = 'p2p';
+    return false;
+  }
+}
+
 function destroyPeer() {
   try { if (conn) conn.close(); } catch(e) {}
   try { if (peer) peer.destroy(); } catch(e) {}
   peer = null;
   conn = null;
+  if (fbUnsub) { try { fbUnsub(); } catch(e) {} fbUnsub = null; }
+  if (fbActionUnsub) { try { fbActionUnsub(); } catch(e) {} fbActionUnsub = null; }
+  if (fbRoomRef && isHost && roomCode) {
+    try { fbRoomRef.child('meta/status').set('closed'); } catch(e) {}
+  }
+  fbRoomRef = null;
   isHost = false;
 }
 
@@ -1868,6 +2064,9 @@ function leaveMulti() {
   if (lobbyPollInterval) clearInterval(lobbyPollInterval);
   showScreen('menuScreen');
 }
+
+// Init firebase on load if saved
+try { initFirebaseFromStorage(); } catch(e) {}
 
 function switchLobbyTab(tab) {
   document.querySelectorAll('.mp-tab').forEach((t, i) =>
@@ -1897,20 +2096,72 @@ function updatePlayersList() {
 
 function initMultiLobby() {
   destroyPeer();
+  initFirebaseFromStorage();
+  updateBackendBadge();
   roomCode = generateRoomCode();
   isHost = true;
   mySeat = 0;
+  myPlayerId = 'host_' + Math.random().toString(36).slice(2, 8);
   document.getElementById('roomCodeDisplay').textContent = roomCode;
-  multiPlayers = [{ name: tgUser?.first_name || 'Ви', id: 'host', host: true }];
+  document.getElementById('startMultiBtn').style.display = '';
+  multiPlayers = [{ name: tgUser?.first_name || 'Ви', id: myPlayerId, host: true }];
   onlineNames[0] = multiPlayers[0].name;
   updatePlayersList();
   document.getElementById('startMultiBtn').disabled = true;
   document.getElementById('startMultiBtn').style.opacity = '0.4';
-  setLobbyStatus('Підключення до мережі...', '');
+  setLobbyStatus('Підключення...', '');
 
-  peer = new Peer(peerIdFor(roomCode), { debug: 1 });
+  if (netBackend === 'firebase' && fbDb) {
+    initFirebaseHost();
+  } else {
+    initPeerHost();
+  }
+}
 
-  peer.on('open', (id) => {
+function initFirebaseHost() {
+  fbRoomRef = fbDb.ref('durak/rooms/' + roomCode);
+  fbRoomRef.set({
+    meta: {
+      hostId: myPlayerId,
+      hostName: onlineNames[0],
+      gameType: G.type,
+      turnTime: G.turnTime,
+      status: 'lobby',
+      created: Date.now()
+    },
+    players: {
+      [myPlayerId]: { name: onlineNames[0], seat: 0, host: true }
+    },
+    state: null,
+    action: null
+  }).then(() => {
+    setLobbyStatus('Кімната готова (Firebase). Надішліть код.', 'ok');
+  }).catch(e => {
+    setLobbyStatus('Firebase помилка: ' + e.message, 'err');
+    netBackend = 'p2p';
+    updateBackendBadge();
+    initPeerHost();
+  });
+
+  // watch players
+  fbUnsub = fbRoomRef.child('players').on('value', (snap) => {
+    const players = snap.val() || {};
+    multiPlayers = Object.values(players).sort((a, b) => a.seat - b.seat)
+      .map(p => ({ name: p.name, id: p.seat, host: !!p.host }));
+    if (multiPlayers[1]) onlineNames[1] = multiPlayers[1].name;
+    updatePlayersList();
+    if (Object.keys(players).length >= 2) {
+      document.getElementById('startMultiBtn').disabled = false;
+      document.getElementById('startMultiBtn').style.opacity = '1';
+      setLobbyStatus('Суперник підключився! Можна починати.', 'ok');
+    }
+  });
+}
+
+function initPeerHost() {
+  peer = new Peer(peerIdFor(roomCode), PEER_CONFIG);
+
+  peer.on('open', () => {
     setLobbyStatus('Кімната готова. Надішліть код другу.', 'ok');
   });
 
@@ -1925,8 +2176,7 @@ function initMultiLobby() {
 
   peer.on('error', (err) => {
     console.error(err);
-    if (String(err).includes('taken') || String(err.type) === 'unavailable-id') {
-      // retry with new code
+    if (String(err).includes('taken') || err.type === 'unavailable-id') {
       roomCode = generateRoomCode();
       document.getElementById('roomCodeDisplay').textContent = roomCode;
       destroyPeer();
@@ -1934,6 +2184,11 @@ function initMultiLobby() {
       return;
     }
     setLobbyStatus('Помилка: ' + (err.type || err.message || err), 'err');
+  });
+
+  peer.on('disconnected', () => {
+    setLobbyStatus('Перепідключення...', '');
+    try { peer.reconnect(); } catch(e) {}
   });
 }
 
@@ -1981,25 +2236,79 @@ function joinRoom() {
   if (code.length !== 4) { toast('Введіть 4-значний код'); return; }
 
   destroyPeer();
+  initFirebaseFromStorage();
+  updateBackendBadge();
   roomCode = code;
   isHost = false;
   mySeat = 1;
+  myPlayerId = 'guest_' + Math.random().toString(36).slice(2, 8);
   onlineNames[1] = tgUser?.first_name || 'Ви';
   setLobbyStatus('Підключення...', '');
   document.getElementById('joinBtn').disabled = true;
 
-  peer = new Peer({ debug: 1 });
+  if (netBackend === 'firebase' && fbDb) {
+    joinFirebaseRoom(code);
+  } else {
+    joinPeerRoom(code);
+  }
+}
+
+function joinFirebaseRoom(code) {
+  fbRoomRef = fbDb.ref('durak/rooms/' + code);
+  fbRoomRef.child('meta').once('value').then((snap) => {
+    const meta = snap.val();
+    if (!meta || meta.status === 'closed') {
+      setLobbyStatus('Кімнату не знайдено', 'err');
+      document.getElementById('joinBtn').disabled = false;
+      return;
+    }
+    G.type = meta.gameType || G.type;
+    G.turnTime = meta.turnTime ?? G.turnTime;
+    onlineNames[0] = meta.hostName || 'Хост';
+
+    return fbRoomRef.child('players/' + myPlayerId).set({
+      name: onlineNames[1], seat: 1, host: false
+    });
+  }).then(() => {
+    if (!fbRoomRef) return;
+    setLobbyStatus('Підключено (Firebase)! Чекайте старту.', 'ok');
+    switchLobbyTab('create');
+    document.getElementById('roomCodeDisplay').textContent = code;
+    document.getElementById('startMultiBtn').style.display = 'none';
+    multiPlayers = [
+      { name: onlineNames[0], id: 0, host: true },
+      { name: onlineNames[1], id: 1, host: false }
+    ];
+    updatePlayersList();
+    document.getElementById('joinBtn').disabled = false;
+
+    // listen state
+    fbUnsub = fbRoomRef.child('state').on('value', (snap) => {
+      const s = snap.val();
+      if (!s) return;
+      applyRemoteState(s);
+      if (s.phase && s.phase !== 'over') {
+        showScreen('gameScreen');
+      }
+    });
+  }).catch((e) => {
+    setLobbyStatus('Помилка: ' + e.message, 'err');
+    document.getElementById('joinBtn').disabled = false;
+  });
+}
+
+function joinPeerRoom(code) {
+  peer = new Peer(PEER_CONFIG);
 
   peer.on('open', () => {
     conn = peer.connect(peerIdFor(code), { reliable: true });
     setupConn(conn, false);
-    // timeout if host not found
     setTimeout(() => {
       if (!conn || !conn.open) {
         setLobbyStatus('Кімнату не знайдено або хост офлайн', 'err');
         document.getElementById('joinBtn').disabled = false;
       }
-    }, 8000);
+    }, 10000);
   });
 
   peer.on('error', (err) => {
@@ -2021,6 +2330,21 @@ function copyRoomCode() {
 }
 
 function netSend(msg) {
+  if (netBackend === 'firebase' && fbRoomRef) {
+    if (msg.type === 'action') {
+      fbRoomRef.child('action').set({
+        ...msg,
+        from: myPlayerId,
+        ts: Date.now()
+      });
+    } else if (msg.type === 'state' || msg.type === 'start') {
+      fbRoomRef.child('state').set(msg.state);
+      if (msg.type === 'start') {
+        fbRoomRef.child('meta/status').set('playing');
+      }
+    }
+    return;
+  }
   if (conn && conn.open) {
     try { conn.send(msg); } catch (e) { console.error(e); }
   }
@@ -2312,16 +2636,33 @@ function finishOnline(result) {
 }
 
 function startMultiGame() {
-  if (!isHost || !conn || !conn.open) {
+  if (!isHost) {
+    toast('Лише хост може почати');
+    return;
+  }
+  const ready = (netBackend === 'firebase' && multiPlayers.length >= 2) ||
+                (netBackend === 'p2p' && conn && conn.open);
+  if (!ready) {
     toast('Чекайте на суперника');
     return;
   }
   G.mode = 'multi';
-  // Init game on host
   initGameOnline();
   netSend({ type: 'start', state: snapshotState() });
   showScreen('gameScreen');
   toast('Гра почалась!');
+
+  // Host listens for guest actions via Firebase
+  if (netBackend === 'firebase' && fbRoomRef) {
+    let lastTs = 0;
+    fbActionUnsub = fbRoomRef.child('action').on('value', (snap) => {
+      const a = snap.val();
+      if (!a || !a.ts || a.ts <= lastTs) return;
+      if (a.from === myPlayerId) return;
+      lastTs = a.ts;
+      processRemoteAction(a);
+    });
+  }
 }
 
 function initGameOnline() {
