@@ -571,6 +571,23 @@
     transition: width 0.25s linear;
   }
   .timer-bar.urgent { background: #e74c3c; }
+
+  /* Card play animation */
+  .card.fly-in {
+    animation: cardFlyIn 0.35s ease-out;
+  }
+  @keyframes cardFlyIn {
+    0% { transform: translateY(40px) scale(0.7); opacity: 0; }
+    60% { transform: translateY(-6px) scale(1.05); opacity: 1; }
+    100% { transform: translateY(0) scale(1); opacity: 1; }
+  }
+  .card.fly-defend {
+    animation: cardDefend 0.3s ease-out;
+  }
+  @keyframes cardDefend {
+    0% { transform: translate(20px, -20px) scale(0.8); opacity: 0; }
+    100% { transform: translate(0, 0) scale(1); opacity: 1; }
+  }
 </style>
 </head>
 <body>
@@ -652,6 +669,32 @@
         <span class="opt-icon">∞</span>
         <span class="opt-name">Без ліміту</span>
         <span class="opt-desc">Без таймера</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="menu-section">
+    <div class="section-label">Складність бота</div>
+    <div class="mode-grid">
+      <div class="opt-btn" data-diff="easy" onclick="selectDiff(this,'easy')">
+        <span class="opt-icon">🌱</span>
+        <span class="opt-name">Легкий</span>
+        <span class="opt-desc">Помиляється</span>
+      </div>
+      <div class="opt-btn selected" data-diff="normal" onclick="selectDiff(this,'normal')">
+        <span class="opt-icon">🎯</span>
+        <span class="opt-name">Норма</span>
+        <span class="opt-desc">Збалансований</span>
+      </div>
+      <div class="opt-btn" data-diff="hard" onclick="selectDiff(this,'hard')">
+        <span class="opt-icon">🔥</span>
+        <span class="opt-name">Складний</span>
+        <span class="opt-desc">Хитрий</span>
+      </div>
+      <div class="opt-btn selected" data-sound="1" id="soundToggleBtn" onclick="toggleSound(this)">
+        <span class="opt-icon" id="soundIcon">🔊</span>
+        <span class="opt-name">Звук</span>
+        <span class="opt-desc" id="soundDesc">Увімкнено</span>
       </div>
     </div>
   </div>
@@ -786,6 +829,8 @@ let G = {
   type: 'classic',
   mode: 'ai',
   turnTime: 20,          // seconds, 0 = off
+  difficulty: 'normal',  // easy | normal | hard
+  sound: true,
   deck: [],
   trump: null,
   trumpSuit: null,
@@ -799,6 +844,42 @@ let G = {
   round: 0,
   busy: false,           // AI is thinking / action locked
 };
+
+// ── Web Audio (no external files) ──
+let audioCtx = null;
+function ensureAudio() {
+  if (!audioCtx) {
+    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {}
+  }
+  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+}
+function playTone(freq, dur, type, vol) {
+  if (!G.sound) return;
+  ensureAudio();
+  if (!audioCtx) return;
+  const o = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  o.type = type || 'sine';
+  o.frequency.value = freq;
+  g.gain.setValueAtTime(vol || 0.12, audioCtx.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+  o.connect(g); g.connect(audioCtx.destination);
+  o.start(); o.stop(audioCtx.currentTime + dur);
+}
+function sfx(name) {
+  if (!G.sound) return;
+  switch(name) {
+    case 'deal': playTone(320, 0.06, 'triangle', 0.08); setTimeout(() => playTone(420, 0.05, 'triangle', 0.06), 40); break;
+    case 'play': playTone(480, 0.08, 'sine', 0.1); break;
+    case 'defend': playTone(560, 0.07, 'sine', 0.09); playTone(380, 0.1, 'triangle', 0.05); break;
+    case 'take': playTone(220, 0.15, 'sawtooth', 0.07); setTimeout(() => playTone(180, 0.2, 'sawtooth', 0.05), 80); break;
+    case 'pass': playTone(400, 0.06, 'sine', 0.07); break;
+    case 'win': playTone(523, 0.12, 'sine', 0.12); setTimeout(() => playTone(659, 0.12, 'sine', 0.1), 100); setTimeout(() => playTone(784, 0.2, 'sine', 0.1), 200); break;
+    case 'lose': playTone(300, 0.2, 'sawtooth', 0.08); setTimeout(() => playTone(220, 0.3, 'sawtooth', 0.06), 150); break;
+    case 'tick': playTone(880, 0.03, 'square', 0.04); break;
+    case 'timeout': playTone(150, 0.25, 'sawtooth', 0.1); break;
+  }
+}
 
 let multiPlayers = [];
 let roomCode = null;
@@ -823,6 +904,18 @@ function selectTimer(el, sec) {
   document.querySelectorAll('[data-timer]').forEach(b => b.classList.remove('selected'));
   el.classList.add('selected');
   G.turnTime = sec;
+}
+function selectDiff(el, diff) {
+  document.querySelectorAll('[data-diff]').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  G.difficulty = diff;
+}
+function toggleSound(el) {
+  G.sound = !G.sound;
+  document.getElementById('soundIcon').textContent = G.sound ? '🔊' : '🔇';
+  document.getElementById('soundDesc').textContent = G.sound ? 'Увімкнено' : 'Вимкнено';
+  el.classList.toggle('selected', G.sound);
+  if (G.sound) sfx('play');
 }
 
 function startGame() {
@@ -911,8 +1004,8 @@ function initGame() {
   renderAll();
   updateStatus();
   updateButtons();
+  sfx('deal');
 
-  // CRITICAL FIX: start AI if bot goes first
   if (!G.playerTurn) {
     setTimeout(() => {
       if (G.phase === 'attack' && !G.playerTurn) aiAttack();
@@ -953,6 +1046,7 @@ function startTimer() {
   timerId = setInterval(() => {
     timerLeft--;
     updateTimerUI();
+    if (timerLeft > 0 && timerLeft <= 5) sfx('tick');
     if (timerLeft <= 0) {
       stopTimer();
       onTimerExpired();
@@ -983,13 +1077,12 @@ function stopTimer() {
 
 function onTimerExpired() {
   if (G.phase === 'over' || G.busy) return;
+  sfx('timeout');
   toast('Час вийшов!');
   if (G.playerTurn && G.phase === 'attack') {
-    // Must have already played at least one card to pass
     if (G.table.length > 0) {
       endRound(false);
     } else {
-      // Forced to attack with weakest legal card
       const legal = G.playerHand.filter(c => canPlay(c));
       if (legal.length) {
         const sorted = legal.sort((a,b) => {
@@ -1091,25 +1184,29 @@ function renderTable() {
     return;
   }
   el.style.opacity = '1';
-  G.table.forEach(pair => {
+  G.table.forEach((pair, pi) => {
     const pairEl = document.createElement('div');
     pairEl.className = 'card-pair';
     pairEl.style.width = pair.defense ? '62px' : '50px';
     pairEl.style.height = '74px';
 
-    const atk = renderCardEl(pair.attack, null, '');
+    const atkExtra = pair._justPlayed ? ' fly-in' : '';
+    const atk = renderCardEl(pair.attack, null, atkExtra);
     atk.style.position = 'absolute';
     atk.style.top = '0';
     atk.style.left = '0';
     pairEl.appendChild(atk);
+    if (pair._justPlayed) pair._justPlayed = false;
 
     if (pair.defense) {
-      const def = renderCardEl(pair.defense, null, '');
+      const defExtra = pair._justDefended ? ' fly-defend' : '';
+      const def = renderCardEl(pair.defense, null, defExtra);
       def.style.position = 'absolute';
       def.style.top = '8px';
       def.style.left = '12px';
       def.style.zIndex = '2';
       pairEl.appendChild(def);
+      if (pair._justDefended) pair._justDefended = false;
     }
     el.appendChild(pairEl);
   });
@@ -1213,14 +1310,15 @@ function playerAttack() {
 
   // ── Player is attacker ──
   if (G.playerTurn && G.phase === 'attack') {
-    G.table.push({ attack: card, defense: null });
+    const pair = { attack: card, defense: null, _justPlayed: true };
+    G.table.push(pair);
     G.playerHand.splice(G.selectedCard, 1);
     G.selectedCard = null;
     G.phase = 'defense';
+    sfx('play');
     renderAll();
     updateStatus();
     updateButtons();
-    // AI defends
     setTimeout(aiDefend, 650);
     return;
   }
@@ -1232,16 +1330,11 @@ function playerAttack() {
 
     // Passing / tossing transfer
     if ((G.type === 'passing' || G.type === 'tossing') && card.rank === uncovered.attack.rank) {
-      G.table.push({ attack: card, defense: null });
+      G.table.push({ attack: card, defense: null, _justPlayed: true });
       G.playerHand.splice(G.selectedCard, 1);
       G.selectedCard = null;
+      sfx('play');
       toast(G.type === 'passing' ? 'Удар переведено!' : 'Карту перекинуто!');
-      // After transfer the original attacker (bot) must now defend the new cards
-      // In 1v1 we keep playerTurn=false so bot is still the "attacker" side for status,
-      // but actually bot has to beat the new attack → we call aiDefend which expects G.playerTurn=true.
-      // Simplification for 1v1: treat transfer as adding another attack that bot must beat.
-      // Correct 1v1 model: after transfer roles stay, bot defends the whole table.
-      // We force G.playerTurn = true so aiDefend runs (bot defends).
       G.playerTurn = true;
       G.phase = 'defense';
       renderAll();
@@ -1257,12 +1350,13 @@ function playerAttack() {
     }
 
     uncovered.defense = card;
+    uncovered._justDefended = true;
     G.playerHand.splice(G.selectedCard, 1);
     G.selectedCard = null;
+    sfx('defend');
 
     const stillUncovered = G.table.some(p => p.defense == null);
     if (!stillUncovered) {
-      // All covered → attacker (bot) may throw more
       if (G.type === 'throwing' || G.type === 'classic' || G.type === 'tossing') {
         G.phase = 'attack';
         renderAll();
@@ -1286,6 +1380,7 @@ function playerPass() {
   if (G.playerTurn && G.phase === 'attack') {
     if (G.table.length === 0) { toast('Спочатку атакуйте!'); return; }
     stopTimer();
+    sfx('pass');
     endRound(false);
   } else if (!G.playerTurn && G.phase === 'defense') {
     playerTake();
@@ -1305,6 +1400,7 @@ function playerTake() {
   G.passCards.forEach(c => G.playerHand.push(c));
   G.table = [];
   G.passCards = [];
+  sfx('take');
   toast('Ви взяли карти');
   endRound(true);
 }
@@ -1312,6 +1408,62 @@ function playerTake() {
 // ═══════════════════════════════════════
 // AI LOGIC (fixed)
 // ═══════════════════════════════════════
+function pickAttackCard(isFirst) {
+  const hand = G.oppHand;
+  const diff = G.difficulty;
+
+  if (isFirst) {
+    // Sort: non-trump ascending, then trump ascending
+    const sorted = [...hand].sort((a, b) => {
+      const at = a.suit === G.trumpSuit ? 1 : 0;
+      const bt = b.suit === G.trumpSuit ? 1 : 0;
+      if (at !== bt) return at - bt;
+      return RANK_VAL[a.rank] - RANK_VAL[b.rank];
+    });
+    if (diff === 'easy') {
+      // Sometimes play a random / higher card
+      if (Math.random() < 0.4) return sorted[Math.min(sorted.length - 1, Math.floor(Math.random() * 3))];
+      return sorted[0];
+    }
+    if (diff === 'hard') {
+      // Prefer keeping high trumps; attack with mid non-trump if possible
+      const nonTrump = sorted.filter(c => c.suit !== G.trumpSuit);
+      if (nonTrump.length >= 2) return nonTrump[Math.min(1, nonTrump.length - 1)];
+      return sorted[0];
+    }
+    return sorted[0];
+  }
+
+  // Throw-in
+  const ranks = tableRanks();
+  const matching = hand.filter(c => ranks.includes(c.rank));
+  if (!matching.length) return null;
+
+  const sorted = matching.sort((a, b) => {
+    const at = a.suit === G.trumpSuit ? 1 : 0;
+    const bt = b.suit === G.trumpSuit ? 1 : 0;
+    if (at !== bt) return at - bt;
+    return RANK_VAL[a.rank] - RANK_VAL[b.rank];
+  });
+
+  if (diff === 'easy') {
+    // Often skip throwing or throw trump wastefully
+    if (Math.random() < 0.35) return null;
+    return sorted[Math.floor(Math.random() * sorted.length)];
+  }
+  if (diff === 'hard') {
+    // Never throw high trump unless only option; prefer lowest non-trump
+    const nonTrump = sorted.filter(c => c.suit !== G.trumpSuit);
+    if (nonTrump.length) return nonTrump[0];
+    // Only throw low trump if table is almost full or hand is small
+    if (G.table.length >= 4 || hand.length <= 3) return sorted[0];
+    return null;
+  }
+  // normal
+  const nonTrump = sorted.filter(c => c.suit !== G.trumpSuit);
+  return nonTrump[0] || (G.table.length < 4 ? sorted[0] : null);
+}
+
 function aiAttack() {
   if (G.phase !== 'attack' || G.playerTurn || G.busy) return;
   G.busy = true;
@@ -1323,22 +1475,8 @@ function aiAttack() {
     return;
   }
 
-  let card = null;
-  if (G.table.length === 0) {
-    // First attack: prefer lowest non-trump
-    const nonTrumps = G.oppHand
-      .filter(c => c.suit !== G.trumpSuit)
-      .sort((a,b) => RANK_VAL[a.rank] - RANK_VAL[b.rank]);
-    card = nonTrumps[0] || [...G.oppHand].sort((a,b) => RANK_VAL[a.rank] - RANK_VAL[b.rank])[0];
-  } else {
-    // Throw matching ranks, prefer non-trump lowest
-    const ranks = tableRanks();
-    const matching = G.oppHand.filter(c => ranks.includes(c.rank));
-    const nonTrumps = matching
-      .filter(c => c.suit !== G.trumpSuit)
-      .sort((a,b) => RANK_VAL[a.rank] - RANK_VAL[b.rank]);
-    card = nonTrumps[0] || matching.sort((a,b) => RANK_VAL[a.rank] - RANK_VAL[b.rank])[0] || null;
-  }
+  const isFirst = G.table.length === 0;
+  const card = pickAttackCard(isFirst);
 
   if (!card) {
     G.busy = false;
@@ -1348,17 +1486,46 @@ function aiAttack() {
 
   const idx = G.oppHand.indexOf(card);
   G.oppHand.splice(idx, 1);
-  G.table.push({ attack: card, defense: null });
+  G.table.push({ attack: card, defense: null, _justPlayed: true });
   G.phase = 'defense';
   G.busy = false;
+  sfx('play');
   renderAll();
   updateStatus();
   updateButtons();
-  startTimer(); // player's turn to defend
+  startTimer();
+}
+
+function pickDefendCard(attackCard) {
+  const candidates = G.oppHand
+    .filter(c => beats(attackCard, c, G.trumpSuit))
+    .sort((a, b) => {
+      const at = a.suit === G.trumpSuit ? 1 : 0;
+      const bt = b.suit === G.trumpSuit ? 1 : 0;
+      if (at !== bt) return at - bt;
+      return RANK_VAL[a.rank] - RANK_VAL[b.rank];
+    });
+
+  if (!candidates.length) return null;
+
+  const diff = G.difficulty;
+  if (diff === 'easy') {
+    // Sometimes refuse to beat even when can, or use high card
+    if (Math.random() < 0.25) return null;
+    if (Math.random() < 0.4) return candidates[Math.min(candidates.length - 1, Math.floor(Math.random() * candidates.length))];
+    return candidates[0];
+  }
+  if (diff === 'hard') {
+    // Always use cheapest; avoid high trump unless necessary
+    const nonTrump = candidates.filter(c => c.suit !== G.trumpSuit);
+    if (nonTrump.length) return nonTrump[0];
+    // Use lowest trump only
+    return candidates[0];
+  }
+  return candidates[0];
 }
 
 function aiDefend() {
-  // Bot defends when player is the attacker (G.playerTurn === true)
   if (G.phase !== 'defense' || !G.playerTurn || G.busy) return;
   G.busy = true;
   stopTimer();
@@ -1370,25 +1537,22 @@ function aiDefend() {
     return;
   }
 
-  // Prefer lowest non-trump that beats
-  const candidates = G.oppHand
-    .filter(c => beats(uncovered.attack, c, G.trumpSuit))
-    .sort((a,b) => {
-      const at = a.suit === G.trumpSuit ? 1 : 0;
-      const bt = b.suit === G.trumpSuit ? 1 : 0;
-      if (at !== bt) return at - bt;
-      return RANK_VAL[a.rank] - RANK_VAL[b.rank];
-    });
-
-  // Passing: try to transfer if no good beat
+  // Transfer option
   if (G.type === 'passing' || G.type === 'tossing') {
-    const transfer = G.oppHand.find(c => c.rank === uncovered.attack.rank && c !== candidates[0]);
-    if (transfer && (candidates.length === 0 || Math.random() < 0.35)) {
-      G.table.push({ attack: transfer, defense: null });
-      const i = G.oppHand.indexOf(transfer);
-      G.oppHand.splice(i, 1);
+    const transfers = G.oppHand.filter(c => c.rank === uncovered.attack.rank);
+    const canBeat = G.oppHand.some(c => beats(uncovered.attack, c, G.trumpSuit));
+    let wantTransfer = false;
+    if (transfers.length) {
+      if (G.difficulty === 'easy') wantTransfer = Math.random() < 0.5;
+      else if (G.difficulty === 'hard') wantTransfer = !canBeat || (transfers.length > 1 && Math.random() < 0.55);
+      else wantTransfer = !canBeat || Math.random() < 0.3;
+    }
+    if (wantTransfer && transfers.length) {
+      const transfer = transfers[0];
+      G.table.push({ attack: transfer, defense: null, _justPlayed: true });
+      G.oppHand.splice(G.oppHand.indexOf(transfer), 1);
+      sfx('play');
       toast(G.type === 'passing' ? 'Бот переводить удар!' : 'Бот перекидає!');
-      // After transfer player must defend again
       G.playerTurn = false;
       G.phase = 'defense';
       G.busy = false;
@@ -1400,9 +1564,11 @@ function aiDefend() {
     }
   }
 
-  if (candidates.length === 0) {
-    // Bot takes
+  const chosen = pickDefendCard(uncovered.attack);
+
+  if (!chosen) {
     toast('Бот бере карти');
+    sfx('take');
     G.table.forEach(p => {
       G.oppHand.push(p.attack);
       if (p.defense) G.oppHand.push(p.defense);
@@ -1415,10 +1581,11 @@ function aiDefend() {
     return;
   }
 
-  const chosen = candidates[0];
   const idx = G.oppHand.indexOf(chosen);
   G.oppHand.splice(idx, 1);
   uncovered.defense = chosen;
+  uncovered._justDefended = true;
+  sfx('defend');
 
   const stillUncov = G.table.some(p => p.defense == null);
   G.busy = false;
@@ -1429,12 +1596,11 @@ function aiDefend() {
       renderAll();
       updateStatus();
       updateButtons();
-      startTimer(); // player may throw more
+      startTimer();
     } else {
       endRound(false);
     }
   } else {
-    // Still uncovered cards – bot continues defending automatically
     renderAll();
     updateStatus();
     updateButtons();
@@ -1443,7 +1609,6 @@ function aiDefend() {
 }
 
 function aiThrow() {
-  // Bot is attacker → G.playerTurn must be false
   if (G.playerTurn || G.phase !== 'attack' || G.busy) return;
   G.busy = true;
   stopTimer();
@@ -1454,12 +1619,7 @@ function aiThrow() {
     return;
   }
 
-  const ranks = tableRanks();
-  const matching = G.oppHand.filter(c => ranks.includes(c.rank));
-  const nonTrumps = matching
-    .filter(c => c.suit !== G.trumpSuit)
-    .sort((a,b) => RANK_VAL[a.rank] - RANK_VAL[b.rank]);
-  const toThrow = nonTrumps[0] || matching.sort((a,b) => RANK_VAL[a.rank] - RANK_VAL[b.rank])[0] || null;
+  const toThrow = pickAttackCard(false);
 
   if (!toThrow) {
     G.busy = false;
@@ -1469,13 +1629,14 @@ function aiThrow() {
 
   const idx = G.oppHand.indexOf(toThrow);
   G.oppHand.splice(idx, 1);
-  G.table.push({ attack: toThrow, defense: null });
+  G.table.push({ attack: toThrow, defense: null, _justPlayed: true });
   G.phase = 'defense';
   G.busy = false;
+  sfx('play');
   renderAll();
   updateStatus();
   updateButtons();
-  startTimer(); // player defends
+  startTimer();
 }
 
 // ═══════════════════════════════════════
@@ -1537,6 +1698,9 @@ function checkWin() {
 function showResult(outcome) {
   stopTimer();
   G.phase = 'over';
+  if (outcome === 'win') sfx('win');
+  else if (outcome === 'lose') sfx('lose');
+  else sfx('pass');
   const icons = { win:'🏆', lose:'🤡', draw:'🤝' };
   const titles = { win:'Перемога!', lose:'Дурак!', draw:'Нічия!' };
   const subs = {
@@ -1544,11 +1708,12 @@ function showResult(outcome) {
     lose: 'Ви залишились з картами',
     draw: 'Обидва гравці вийшли одночасно'
   };
+  const diffNames = { easy:'Легкий', normal:'Норма', hard:'Складний' };
   document.getElementById('resultIcon').textContent = icons[outcome];
   document.getElementById('resultTitle').textContent = titles[outcome];
   document.getElementById('resultSub').textContent = subs[outcome];
   document.getElementById('resultDetail').textContent =
-    `Зіграно раундів: ${G.round} • Варіант: ${document.getElementById('gameTypeLabel').textContent}`;
+    `Раундів: ${G.round} • ${document.getElementById('gameTypeLabel').textContent} • Бот: ${diffNames[G.difficulty] || G.difficulty}`;
   showScreen('resultScreen');
 }
 
