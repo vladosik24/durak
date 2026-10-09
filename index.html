@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>Дурак 🃏</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Crimson+Pro:wght@400;600&display=swap');
 
@@ -574,20 +575,103 @@
 
   /* Card play animation */
   .card.fly-in {
-    animation: cardFlyIn 0.35s ease-out;
+    animation: cardFlyIn 0.38s cubic-bezier(0.22, 1, 0.36, 1);
   }
   @keyframes cardFlyIn {
-    0% { transform: translateY(40px) scale(0.7); opacity: 0; }
-    60% { transform: translateY(-6px) scale(1.05); opacity: 1; }
-    100% { transform: translateY(0) scale(1); opacity: 1; }
+    0% { transform: translateY(50px) scale(0.55) rotate(-8deg); opacity: 0; }
+    70% { transform: translateY(-8px) scale(1.06) rotate(2deg); opacity: 1; }
+    100% { transform: translateY(0) scale(1) rotate(0); opacity: 1; }
   }
   .card.fly-defend {
-    animation: cardDefend 0.3s ease-out;
+    animation: cardDefend 0.32s cubic-bezier(0.22, 1, 0.36, 1);
   }
   @keyframes cardDefend {
-    0% { transform: translate(20px, -20px) scale(0.8); opacity: 0; }
-    100% { transform: translate(0, 0) scale(1); opacity: 1; }
+    0% { transform: translate(24px, -28px) scale(0.7) rotate(12deg); opacity: 0; }
+    100% { transform: translate(0, 0) scale(1) rotate(0); opacity: 1; }
   }
+  .card.deal-in {
+    animation: dealIn 0.4s ease-out both;
+  }
+  @keyframes dealIn {
+    0% { transform: translateY(-80px) scale(0.4) rotate(15deg); opacity: 0; }
+    100% { transform: translateY(0) scale(1) rotate(0); opacity: 1; }
+  }
+  .card.shake {
+    animation: cardShake 0.4s ease;
+  }
+  @keyframes cardShake {
+    0%,100% { transform: translateX(0); }
+    20% { transform: translateX(-6px) rotate(-3deg); }
+    40% { transform: translateX(6px) rotate(3deg); }
+    60% { transform: translateX(-4px); }
+    80% { transform: translateX(4px); }
+  }
+  .card-back.deal-in {
+    animation: dealIn 0.4s ease-out both;
+  }
+  .attack-pairs.clear-out {
+    animation: tableClear 0.45s ease-in forwards;
+  }
+  @keyframes tableClear {
+    0% { opacity: 1; transform: scale(1); }
+    100% { opacity: 0; transform: scale(0.7) translateY(-20px); }
+  }
+  .hand-row .card, .hand-row .card-back {
+    transition: margin-left 0.25s ease, transform 0.15s ease;
+  }
+  .turn-badge {
+    animation: badgePulse 1.8s ease-in-out infinite;
+  }
+  @keyframes badgePulse {
+    0%,100% { box-shadow: 0 0 0 0 rgba(201,168,76,0.5); }
+    50% { box-shadow: 0 0 0 6px rgba(201,168,76,0); }
+  }
+  .status-bar.flash {
+    animation: statusFlash 0.5s ease;
+  }
+  @keyframes statusFlash {
+    0% { background: rgba(201,168,76,0.35); }
+    100% { background: rgba(0,0,0,0.2); }
+  }
+  /* Confetti */
+  .confetti-piece {
+    position: fixed;
+    width: 8px; height: 12px;
+    top: -20px;
+    z-index: 1000;
+    pointer-events: none;
+    animation: confettiFall linear forwards;
+  }
+  @keyframes confettiFall {
+    0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+  }
+  .result-icon {
+    animation: resultPop 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  @keyframes resultPop {
+    0% { transform: scale(0.3); opacity: 0; }
+    60% { transform: scale(1.15); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  .lobby-status {
+    font-size: 13px;
+    color: var(--text2);
+    text-align: center;
+    min-height: 20px;
+  }
+  .lobby-status.ok { color: #4caf50; }
+  .lobby-status.err { color: #e74c3c; }
+  .conn-dot {
+    display: inline-block;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #4caf50;
+    margin-right: 6px;
+    vertical-align: middle;
+  }
+  .conn-dot.off { background: var(--text2); }
+  .conn-dot.wait { background: #e8c97a; animation: pulse 1.2s infinite; }
 </style>
 </head>
 <body>
@@ -716,22 +800,24 @@
       <div class="room-code-label">Код кімнати</div>
       <div class="room-code-value" id="roomCodeDisplay">----</div>
     </div>
+    <div class="lobby-status" id="lobbyStatus">Підключення...</div>
     <div class="players-list">
-      <div class="players-list-title">Гравці</div>
+      <div class="players-list-title">Гравці (онлайн)</div>
       <div id="playersList"></div>
     </div>
     <div class="lobby-btns">
       <button class="start-btn" id="startMultiBtn" onclick="startMultiGame()" disabled style="opacity:0.4">Почати гру</button>
       <button class="secondary-btn" onclick="copyRoomCode()">📋 Скопіювати код</button>
-      <button class="secondary-btn" onclick="showScreen('menuScreen')">← Назад</button>
+      <button class="secondary-btn" onclick="leaveMulti()">← Назад</button>
     </div>
   </div>
 
   <div class="mp-panel" id="joinPanel">
     <input class="join-input" id="joinCodeInput" placeholder="Введіть код кімнати" maxlength="4">
+    <div class="lobby-status" id="joinStatus"></div>
     <div class="lobby-btns">
-      <button class="start-btn" onclick="joinRoom()">Приєднатись</button>
-      <button class="secondary-btn" onclick="showScreen('menuScreen')">← Назад</button>
+      <button class="start-btn" id="joinBtn" onclick="joinRoom()">Приєднатись</button>
+      <button class="secondary-btn" onclick="leaveMulti()">← Назад</button>
     </div>
   </div>
 </div>
@@ -1006,11 +1092,11 @@ function initGame() {
   updateButtons();
   sfx('deal');
 
-  if (!G.playerTurn) {
+  if (!G.playerTurn && G.mode === 'ai') {
     setTimeout(() => {
       if (G.phase === 'attack' && !G.playerTurn) aiAttack();
     }, 700);
-  } else {
+  } else if (G.playerTurn) {
     startTimer();
   }
 }
@@ -1319,7 +1405,8 @@ function playerAttack() {
     renderAll();
     updateStatus();
     updateButtons();
-    setTimeout(aiDefend, 650);
+    if (G.mode === 'ai') setTimeout(aiDefend, 650);
+    else if (G.mode === 'multi' && isHost) broadcastState();
     return;
   }
 
@@ -1340,7 +1427,8 @@ function playerAttack() {
       renderAll();
       updateStatus();
       updateButtons();
-      setTimeout(aiDefend, 650);
+      if (G.mode === 'ai') setTimeout(aiDefend, 650);
+      else if (G.mode === 'multi' && isHost) broadcastState();
       return;
     }
 
@@ -1362,7 +1450,8 @@ function playerAttack() {
         renderAll();
         updateStatus();
         updateButtons();
-        setTimeout(aiThrow, 650);
+        if (G.mode === 'ai') setTimeout(aiThrow, 650);
+        else if (G.mode === 'multi' && isHost) { broadcastState(); startTimer(); }
       } else {
         endRound(false);
       }
@@ -1371,6 +1460,7 @@ function playerAttack() {
       updateStatus();
       updateButtons();
       startTimer();
+      if (G.mode === 'multi' && isHost) broadcastState();
     }
   }
 }
@@ -1667,9 +1757,9 @@ function endRound(defenderTook) {
   updateButtons();
   updateDeckDisplay();
 
-  if (!G.playerTurn) {
+  if (!G.playerTurn && G.mode === 'ai') {
     setTimeout(aiAttack, 700);
-  } else {
+  } else if (G.playerTurn) {
     startTimer();
   }
 }
@@ -1712,8 +1802,11 @@ function showResult(outcome) {
   document.getElementById('resultIcon').textContent = icons[outcome];
   document.getElementById('resultTitle').textContent = titles[outcome];
   document.getElementById('resultSub').textContent = subs[outcome];
+  const extra = G.mode === 'multi'
+    ? 'Онлайн'
+    : ('Бот: ' + (diffNames[G.difficulty] || G.difficulty));
   document.getElementById('resultDetail').textContent =
-    `Раундів: ${G.round} • ${document.getElementById('gameTypeLabel').textContent} • Бот: ${diffNames[G.difficulty] || G.difficulty}`;
+    `Раундів: ${G.round} • ${document.getElementById('gameTypeLabel').textContent} • ${extra}`;
   showScreen('resultScreen');
 }
 
@@ -1735,35 +1828,53 @@ function confirmBack() {
 }
 
 // ═══════════════════════════════════════
-// MULTIPLAYER (localStorage simulation)
+// ONLINE MULTIPLAYER (PeerJS P2P)
 // ═══════════════════════════════════════
-function initMultiLobby() {
-  roomCode = generateRoomCode();
-  document.getElementById('roomCodeDisplay').textContent = roomCode;
-  multiPlayers = [{ name: tgUser?.first_name || 'Ви', id: tgUser?.id || 'local', host: true }];
-  updatePlayersList();
-  document.getElementById('startMultiBtn').disabled = false;
-  document.getElementById('startMultiBtn').style.opacity = '1';
+let peer = null;
+let conn = null;           // DataConnection to the other player
+let isHost = false;
+let mySeat = 0;            // 0 = host side, 1 = guest side
+let onlineNames = { 0: 'Хост', 1: 'Гість' };
+let dealingAnim = false;
 
-  const roomData = { code: roomCode, host: multiPlayers[0].name, players: multiPlayers, gameType: G.type };
-  localStorage.setItem('durak_room_' + roomCode, JSON.stringify(roomData));
-  startLobbyPoll();
+function generateRoomCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let code = '';
+  for (let i = 0; i < 4; i++) code += chars[Math.floor(Math.random() * chars.length)];
+  return code;
 }
 
-function startLobbyPoll() {
+function peerIdFor(code) {
+  return 'durakuk-' + code;
+}
+
+function setLobbyStatus(msg, cls) {
+  const el = document.getElementById('lobbyStatus');
+  if (el) { el.textContent = msg; el.className = 'lobby-status' + (cls ? ' ' + cls : ''); }
+  const je = document.getElementById('joinStatus');
+  if (je) { je.textContent = msg; je.className = 'lobby-status' + (cls ? ' ' + cls : ''); }
+}
+
+function destroyPeer() {
+  try { if (conn) conn.close(); } catch(e) {}
+  try { if (peer) peer.destroy(); } catch(e) {}
+  peer = null;
+  conn = null;
+  isHost = false;
+}
+
+function leaveMulti() {
+  destroyPeer();
   if (lobbyPollInterval) clearInterval(lobbyPollInterval);
-  lobbyPollInterval = setInterval(() => {
-    const data = localStorage.getItem('durak_room_' + roomCode);
-    if (data) {
-      const room = JSON.parse(data);
-      multiPlayers = room.players;
-      updatePlayersList();
-      if (multiPlayers.length >= 2) {
-        document.getElementById('startMultiBtn').disabled = false;
-        document.getElementById('startMultiBtn').style.opacity = '1';
-      }
-    }
-  }, 1500);
+  showScreen('menuScreen');
+}
+
+function switchLobbyTab(tab) {
+  document.querySelectorAll('.mp-tab').forEach((t, i) =>
+    t.classList.toggle('active', (i === 0 && tab === 'create') || (i === 1 && tab === 'join'))
+  );
+  document.getElementById('createPanel').classList.toggle('active', tab === 'create');
+  document.getElementById('joinPanel').classList.toggle('active', tab === 'join');
 }
 
 function updatePlayersList() {
@@ -1775,79 +1886,674 @@ function updatePlayersList() {
     item.innerHTML = `<div class="pi-dot"></div><div>${p.name}${p.host ? ' 👑' : ''}</div>`;
     el.appendChild(item);
   });
-  if (multiPlayers.length < 4) {
+  if (multiPlayers.length < 2) {
     const wait = document.createElement('div');
     wait.className = 'player-item';
     wait.style.color = 'var(--text2)';
-    wait.innerHTML = `<div class="pi-dot waiting"></div><div>Очікування гравця...</div>`;
+    wait.innerHTML = `<div class="pi-dot waiting"></div><div>Очікування суперника...</div>`;
     el.appendChild(wait);
   }
 }
 
-function generateRoomCode() {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let code = '';
-  for (let i = 0; i < 4; i++) code += chars[Math.floor(Math.random() * chars.length)];
-  return code;
+function initMultiLobby() {
+  destroyPeer();
+  roomCode = generateRoomCode();
+  isHost = true;
+  mySeat = 0;
+  document.getElementById('roomCodeDisplay').textContent = roomCode;
+  multiPlayers = [{ name: tgUser?.first_name || 'Ви', id: 'host', host: true }];
+  onlineNames[0] = multiPlayers[0].name;
+  updatePlayersList();
+  document.getElementById('startMultiBtn').disabled = true;
+  document.getElementById('startMultiBtn').style.opacity = '0.4';
+  setLobbyStatus('Підключення до мережі...', '');
+
+  peer = new Peer(peerIdFor(roomCode), { debug: 1 });
+
+  peer.on('open', (id) => {
+    setLobbyStatus('Кімната готова. Надішліть код другу.', 'ok');
+  });
+
+  peer.on('connection', (c) => {
+    if (conn && conn.open) {
+      c.on('open', () => { c.send({ type: 'full' }); c.close(); });
+      return;
+    }
+    conn = c;
+    setupConn(conn, true);
+  });
+
+  peer.on('error', (err) => {
+    console.error(err);
+    if (String(err).includes('taken') || String(err.type) === 'unavailable-id') {
+      // retry with new code
+      roomCode = generateRoomCode();
+      document.getElementById('roomCodeDisplay').textContent = roomCode;
+      destroyPeer();
+      setTimeout(initMultiLobby, 300);
+      return;
+    }
+    setLobbyStatus('Помилка: ' + (err.type || err.message || err), 'err');
+  });
 }
 
-function switchLobbyTab(tab) {
-  document.querySelectorAll('.mp-tab').forEach((t, i) =>
-    t.classList.toggle('active', (i === 0 && tab === 'create') || (i === 1 && tab === 'join'))
-  );
-  document.getElementById('createPanel').classList.toggle('active', tab === 'create');
-  document.getElementById('joinPanel').classList.toggle('active', tab === 'join');
+function setupConn(c, asHost) {
+  c.on('open', () => {
+    if (asHost) {
+      multiPlayers = [
+        { name: onlineNames[0], id: 'host', host: true },
+        { name: 'Суперник', id: 'guest', host: false }
+      ];
+      updatePlayersList();
+      setLobbyStatus('Суперник підключився! Можна починати.', 'ok');
+      document.getElementById('startMultiBtn').disabled = false;
+      document.getElementById('startMultiBtn').style.opacity = '1';
+      // ask guest name
+      c.send({ type: 'hello', name: onlineNames[0], gameType: G.type, turnTime: G.turnTime });
+    } else {
+      setLobbyStatus('Підключено до кімнати!', 'ok');
+      switchLobbyTab('create');
+      document.getElementById('roomCodeDisplay').textContent = roomCode;
+      document.getElementById('startMultiBtn').style.display = 'none';
+    }
+  });
+
+  c.on('data', (msg) => {
+    handleNetMsg(msg);
+  });
+
+  c.on('close', () => {
+    toast('Зв\'язок розірвано');
+    setLobbyStatus('Суперник відключився', 'err');
+    if (G.mode === 'multi' && G.phase !== 'over') {
+      toast('Суперник вийшов');
+    }
+  });
+
+  c.on('error', (e) => {
+    console.error('conn error', e);
+    setLobbyStatus('Помилка з\'єднання', 'err');
+  });
 }
 
 function joinRoom() {
   const code = document.getElementById('joinCodeInput').value.trim().toUpperCase();
   if (code.length !== 4) { toast('Введіть 4-значний код'); return; }
 
-  const data = localStorage.getItem('durak_room_' + code);
-  if (!data) { toast('Кімнату не знайдено'); return; }
-
-  const room = JSON.parse(data);
-  if (room.players.length >= 4) { toast('Кімната повна'); return; }
-
-  const newPlayer = {
-    name: tgUser?.first_name || 'Гравець ' + (room.players.length + 1),
-    id: tgUser?.id || Date.now(),
-    host: false
-  };
-  room.players.push(newPlayer);
-  localStorage.setItem('durak_room_' + code, JSON.stringify(room));
-
+  destroyPeer();
   roomCode = code;
-  multiPlayers = room.players;
-  G.type = room.gameType;
-  toast('Ви приєднались!');
-  switchLobbyTab('create');
-  document.getElementById('roomCodeDisplay').textContent = code;
-  updatePlayersList();
-  startLobbyPoll();
+  isHost = false;
+  mySeat = 1;
+  onlineNames[1] = tgUser?.first_name || 'Ви';
+  setLobbyStatus('Підключення...', '');
+  document.getElementById('joinBtn').disabled = true;
+
+  peer = new Peer({ debug: 1 });
+
+  peer.on('open', () => {
+    conn = peer.connect(peerIdFor(code), { reliable: true });
+    setupConn(conn, false);
+    // timeout if host not found
+    setTimeout(() => {
+      if (!conn || !conn.open) {
+        setLobbyStatus('Кімнату не знайдено або хост офлайн', 'err');
+        document.getElementById('joinBtn').disabled = false;
+      }
+    }, 8000);
+  });
+
+  peer.on('error', (err) => {
+    setLobbyStatus('Помилка: ' + (err.type || err), 'err');
+    document.getElementById('joinBtn').disabled = false;
+  });
 }
 
 function copyRoomCode() {
+  if (!roomCode) return;
   if (navigator.clipboard) {
     navigator.clipboard.writeText(roomCode).then(() => toast('Код скопійовано: ' + roomCode));
   } else {
     toast('Код: ' + roomCode);
   }
   if (tg?.switchInlineQuery) {
-    tg.switchInlineQuery('Приєднуйся до гри Дурак! Код: ' + roomCode);
+    tg.switchInlineQuery('Приєднуйся до Дурака! Код: ' + roomCode);
   }
 }
 
-function startMultiGame() {
-  if (lobbyPollInterval) clearInterval(lobbyPollInterval);
-  toast('Починаємо гру!');
-  setTimeout(() => {
-    initGame();
-    document.getElementById('oppName').textContent =
-      multiPlayers.length > 1 ? multiPlayers[1].name : 'Суперник';
-    showScreen('gameScreen');
-  }, 400);
+function netSend(msg) {
+  if (conn && conn.open) {
+    try { conn.send(msg); } catch (e) { console.error(e); }
+  }
 }
+
+function handleNetMsg(msg) {
+  if (!msg || !msg.type) return;
+
+  switch (msg.type) {
+    case 'hello':
+      onlineNames[0] = msg.name || 'Хост';
+      G.type = msg.gameType || G.type;
+      G.turnTime = msg.turnTime ?? G.turnTime;
+      multiPlayers = [
+        { name: onlineNames[0], id: 'host', host: true },
+        { name: onlineNames[1], id: 'guest', host: false }
+      ];
+      updatePlayersList();
+      netSend({ type: 'hello-back', name: onlineNames[1] });
+      break;
+
+    case 'hello-back':
+      onlineNames[1] = msg.name || 'Гість';
+      multiPlayers[1] = { name: onlineNames[1], id: 'guest', host: false };
+      updatePlayersList();
+      break;
+
+    case 'full':
+      toast('Кімната вже заповнена');
+      break;
+
+    case 'start':
+      applyRemoteState(msg.state);
+      showScreen('gameScreen');
+      toast('Гра почалась!');
+      sfx('deal');
+      break;
+
+    case 'state':
+      applyRemoteState(msg.state);
+      break;
+
+    case 'action':
+      // Host receives guest actions
+      if (!isHost) break;
+      processRemoteAction(msg);
+      break;
+
+    case 'chat':
+      toast(msg.text);
+      break;
+  }
+}
+
+function snapshotState() {
+  // Always from host perspective: playerHand = seat0, oppHand = seat1
+  return {
+    type: G.type,
+    deck: G.deck,
+    trumpSuit: G.trumpSuit,
+    playerHand: G.playerHand,
+    oppHand: G.oppHand,
+    table: G.table.map(p => ({
+      attack: p.attack,
+      defense: p.defense || null
+    })),
+    passCards: G.passCards,
+    playerTurn: G.playerTurn, // true = seat0 attacks
+    phase: G.phase,
+    round: G.round,
+    names: onlineNames
+  };
+}
+
+function applyRemoteState(s) {
+  if (!s) return;
+  stopTimer();
+  G.type = s.type;
+  G.deck = s.deck || [];
+  G.trumpSuit = s.trumpSuit;
+  G.table = (s.table || []).map(p => ({ attack: p.attack, defense: p.defense, _justPlayed: false }));
+  G.passCards = s.passCards || [];
+  G.round = s.round || 0;
+  G.phase = s.phase;
+  G.selectedCard = null;
+  G.busy = false;
+  if (s.names) onlineNames = s.names;
+
+  // Map hands to local perspective
+  if (mySeat === 0) {
+    G.playerHand = s.playerHand || [];
+    G.oppHand = s.oppHand || [];
+    G.playerTurn = s.playerTurn;
+  } else {
+    // Guest: their hand is oppHand on host
+    G.playerHand = s.oppHand || [];
+    G.oppHand = s.playerHand || [];
+    // Flip turn meaning: playerTurn true means seat0 attacks → guest defends when seat0 attacks and phase defense...
+    // Local "playerTurn" means "I am the attacker"
+    G.playerTurn = !s.playerTurn;
+  }
+
+  updateTypeLabel();
+  updateDeckDisplay();
+  renderAll();
+  updateStatusOnline();
+  updateButtons();
+
+  if (G.phase === 'over') {
+    // Determine outcome from empty hands
+    const pEmpty = G.playerHand.length === 0 && G.deck.length === 0;
+    const oEmpty = G.oppHand.length === 0 && G.deck.length === 0;
+    if (pEmpty && !oEmpty) showResult('win');
+    else if (oEmpty && !pEmpty) showResult('lose');
+    else if (pEmpty && oEmpty) showResult('draw');
+    return;
+  }
+
+  const iAct = (G.playerTurn && G.phase === 'attack') || (!G.playerTurn && G.phase === 'defense');
+  if (iAct) startTimer();
+}
+
+function updateStatusOnline() {
+  const el = document.getElementById('statusBar');
+  const oppLabel = mySeat === 0 ? (onlineNames[1] || 'Суперник') : (onlineNames[0] || 'Суперник');
+  document.getElementById('oppName').textContent = oppLabel + ' (' + G.oppHand.length + ')';
+
+  if (G.phase === 'attack') {
+    el.textContent = G.playerTurn ? 'Ваш хід — атакуйте' : (oppLabel + ' атакує...');
+  } else if (G.phase === 'defense') {
+    if (!G.playerTurn) {
+      if (G.type === 'passing') el.textContent = 'Відбийтесь або переведіть';
+      else el.textContent = 'Відбийтесь від атаки';
+    } else {
+      el.textContent = oppLabel + ' відбивається...';
+    }
+  }
+  el.classList.remove('flash');
+  void el.offsetWidth;
+  el.classList.add('flash');
+}
+
+function broadcastState() {
+  if (!isHost) return;
+  netSend({ type: 'state', state: snapshotState() });
+}
+
+function processRemoteAction(msg) {
+  // Guest actions arrive as seat1 perspective
+  // msg.action: 'attack' | 'defend' | 'pass' | 'take'
+  // msg.card: {suit, rank} optional
+  if (G.busy || G.phase === 'over') return;
+
+  // Guest is seat1 → on host, guest is "opp"
+  // When guest attacks: host's G.playerTurn should be false (opp attacks)
+  // When guest defends: host's G.playerTurn should be true (player attacked)
+
+  if (msg.action === 'attack' && msg.card) {
+    if (!(G.phase === 'attack' && !G.playerTurn)) return;
+    // Verify card in opp hand
+    const idx = G.oppHand.findIndex(c => c.suit === msg.card.suit && c.rank === msg.card.rank);
+    if (idx < 0) return;
+    if (G.table.length > 0 && !tableRanks().includes(msg.card.rank)) return;
+    const card = G.oppHand.splice(idx, 1)[0];
+    G.table.push({ attack: card, defense: null, _justPlayed: true });
+    G.phase = 'defense';
+    sfx('play');
+    // Host (seat0) must defend → playerTurn stays false means opp attacked, host defends when !playerTurn && defense
+    // Wait: playerTurn false means opp is attacker, host defends. Good.
+    afterHostAction();
+  } else if (msg.action === 'defend' && msg.card) {
+    if (!(G.phase === 'defense' && G.playerTurn)) return;
+    const uncovered = G.table.find(p => !p.defense);
+    if (!uncovered) return;
+    const idx = G.oppHand.findIndex(c => c.suit === msg.card.suit && c.rank === msg.card.rank);
+    if (idx < 0) return;
+    const card = G.oppHand[idx];
+    // transfer?
+    if ((G.type === 'passing' || G.type === 'tossing') && card.rank === uncovered.attack.rank) {
+      G.oppHand.splice(idx, 1);
+      G.table.push({ attack: card, defense: null, _justPlayed: true });
+      G.playerTurn = false; // now host must defend the transferred attack... 
+      // After transfer by defender (opp), attacker (host) becomes defender of new cards.
+      // In our model playerTurn=true meant host is attacker. After transfer, host must defend → set playerTurn false? 
+      // Actually transfer: defender plays same rank as new attack, original attacker now defends all.
+      // So roles swap for defense purposes: host was attacker, now host defends → playerTurn stays true for aiDefend logic which expects playerTurn true for opp defend... 
+      // Simpler for online: just add attack, keep phase defense, flip playerTurn so the other must defend.
+      G.playerTurn = false;
+      G.phase = 'defense';
+      sfx('play');
+      afterHostAction();
+      return;
+    }
+    if (!beats(uncovered.attack, card, G.trumpSuit)) return;
+    G.oppHand.splice(idx, 1);
+    uncovered.defense = card;
+    uncovered._justDefended = true;
+    sfx('defend');
+    const still = G.table.some(p => !p.defense);
+    if (!still) {
+      if (G.type === 'throwing' || G.type === 'classic' || G.type === 'tossing') {
+        G.phase = 'attack';
+        // attacker can throw more — attacker is host (playerTurn true)
+      } else {
+        endRoundOnline(false);
+        return;
+      }
+    }
+    afterHostAction();
+  } else if (msg.action === 'pass') {
+    if (G.phase === 'attack' && !G.playerTurn && G.table.length > 0) {
+      endRoundOnline(false);
+    }
+  } else if (msg.action === 'take') {
+    if (G.phase === 'defense' && G.playerTurn) {
+      // guest takes while defending host's attack
+      G.table.forEach(p => {
+        G.oppHand.push(p.attack);
+        if (p.defense) G.oppHand.push(p.defense);
+      });
+      G.table = [];
+      G.passCards = [];
+      sfx('take');
+      endRoundOnline(true);
+    }
+  }
+}
+
+function afterHostAction() {
+  G.selectedCard = null;
+  G.busy = false;
+  if (checkWinOnline()) return;
+  renderAll();
+  updateStatus();
+  updateButtons();
+  updateDeckDisplay();
+  broadcastState();
+  // Host local timer if host must act
+  const hostActs = (G.playerTurn && G.phase === 'attack') || (!G.playerTurn && G.phase === 'defense');
+  if (hostActs) startTimer();
+  else stopTimer();
+}
+
+function endRoundOnline(defenderTook) {
+  stopTimer();
+  // Animate table clear
+  const pairs = document.getElementById('attackPairs');
+  if (pairs && G.table.length) {
+    pairs.classList.add('clear-out');
+    setTimeout(() => pairs.classList.remove('clear-out'), 450);
+  }
+  G.round++;
+  G.table = [];
+  G.passCards = [];
+  G.selectedCard = null;
+  G.busy = false;
+  refillHands();
+  if (!defenderTook) G.playerTurn = !G.playerTurn;
+  G.phase = 'attack';
+  if (checkWinOnline()) return;
+  renderAll();
+  updateStatus();
+  updateButtons();
+  updateDeckDisplay();
+  broadcastState();
+  const hostActs = G.playerTurn && G.phase === 'attack';
+  if (hostActs) startTimer();
+}
+
+function checkWinOnline() {
+  const pEmpty = G.playerHand.length === 0 && G.deck.length === 0;
+  const oEmpty = G.oppHand.length === 0 && G.deck.length === 0;
+  if (pEmpty && oEmpty) { finishOnline('draw'); return true; }
+  if (pEmpty) { finishOnline('host_win'); return true; }
+  if (oEmpty) { finishOnline('guest_win'); return true; }
+  return false;
+}
+
+function finishOnline(result) {
+  G.phase = 'over';
+  broadcastState();
+  netSend({ type: 'state', state: snapshotState() });
+  // Local outcome
+  let outcome = 'draw';
+  if (result === 'host_win') outcome = mySeat === 0 ? 'win' : 'lose';
+  if (result === 'guest_win') outcome = mySeat === 1 ? 'win' : 'lose';
+  showResult(outcome);
+  if (outcome === 'win') launchConfetti();
+}
+
+function startMultiGame() {
+  if (!isHost || !conn || !conn.open) {
+    toast('Чекайте на суперника');
+    return;
+  }
+  G.mode = 'multi';
+  // Init game on host
+  initGameOnline();
+  netSend({ type: 'start', state: snapshotState() });
+  showScreen('gameScreen');
+  toast('Гра почалась!');
+}
+
+function initGameOnline() {
+  stopTimer();
+  G.deck = buildDeck();
+  G.playerHand = [];
+  G.oppHand = [];
+  G.table = [];
+  G.passCards = [];
+  G.selectedCard = null;
+  G.round = 0;
+  G.busy = false;
+  G.phase = 'attack';
+  for (let i = 0; i < 6; i++) {
+    G.playerHand.push(G.deck.pop());
+    G.oppHand.push(G.deck.pop());
+  }
+  G.trump = G.deck[0];
+  G.trumpSuit = G.trump.suit;
+  G.playerTurn = decideFirst();
+  updateTypeLabel();
+  updateDeckDisplay();
+  renderAllWithDealAnim();
+  updateStatus();
+  updateButtons();
+  sfx('deal');
+  document.getElementById('oppName').textContent = (onlineNames[1] || 'Суперник') + ' (6)';
+  if (G.playerTurn) startTimer();
+}
+
+// ── Wrap player actions for online ──
+const _playerAttack = playerAttack;
+const _playerPass = playerPass;
+const _playerTake = playerTake;
+
+playerAttack = function () {
+  if (G.mode === 'multi' && !isHost) {
+    // Guest sends action to host
+    if (G.selectedCard === null) return;
+    const card = G.playerHand[G.selectedCard];
+    if (!canPlay(card)) { toast('Цю карту не можна зіграти'); return; }
+    stopTimer();
+    if (G.playerTurn && G.phase === 'attack') {
+      netSend({ type: 'action', action: 'attack', card: { suit: card.suit, rank: card.rank } });
+      // optimistic remove
+      G.playerHand.splice(G.selectedCard, 1);
+      G.selectedCard = null;
+      G.busy = true;
+      sfx('play');
+      renderPlayerHand();
+      updateButtons();
+    } else if (!G.playerTurn && G.phase === 'defense') {
+      netSend({ type: 'action', action: 'defend', card: { suit: card.suit, rank: card.rank } });
+      G.playerHand.splice(G.selectedCard, 1);
+      G.selectedCard = null;
+      G.busy = true;
+      sfx('defend');
+      renderPlayerHand();
+      updateButtons();
+    }
+    return;
+  }
+  if (G.mode === 'multi' && isHost) {
+    _playerAttack();
+    // After host local action, sync
+    setTimeout(() => {
+      if (G.phase !== 'over') broadcastState();
+    }, 50);
+    return;
+  }
+  _playerAttack();
+};
+
+playerPass = function () {
+  if (G.mode === 'multi' && !isHost) {
+    if (G.playerTurn && G.phase === 'attack') {
+      if (G.table.length === 0) { toast('Спочатку атакуйте!'); return; }
+      stopTimer();
+      sfx('pass');
+      netSend({ type: 'action', action: 'pass' });
+      G.busy = true;
+    } else if (!G.playerTurn && G.phase === 'defense') {
+      playerTake();
+    }
+    return;
+  }
+  if (G.mode === 'multi' && isHost) {
+    _playerPass();
+    setTimeout(() => { if (G.phase !== 'over') broadcastState(); }, 50);
+    return;
+  }
+  _playerPass();
+};
+
+playerTake = function () {
+  if (G.mode === 'multi' && !isHost) {
+    if (G.playerTurn) { toast('Ви атакуєте — не можна брати'); return; }
+    if (G.phase !== 'defense') return;
+    stopTimer();
+    sfx('take');
+    netSend({ type: 'action', action: 'take' });
+    G.busy = true;
+    return;
+  }
+  if (G.mode === 'multi' && isHost) {
+    _playerTake();
+    setTimeout(() => { if (G.phase !== 'over') broadcastState(); }, 50);
+    return;
+  }
+  _playerTake();
+};
+
+// Override endRound for online host (AI path not used)
+const _endRound = endRound;
+endRound = function (defenderTook) {
+  if (G.mode === 'multi' && isHost) {
+    endRoundOnline(defenderTook);
+    return;
+  }
+  // AI mode: animate clear
+  const pairs = document.getElementById('attackPairs');
+  if (pairs && G.table.length) {
+    pairs.classList.add('clear-out');
+    setTimeout(() => pairs.classList.remove('clear-out'), 450);
+  }
+  _endRound(defenderTook);
+};
+
+const _showResult = showResult;
+showResult = function (outcome) {
+  _showResult(outcome);
+  if (outcome === 'win') launchConfetti();
+};
+
+const _confirmBack = confirmBack;
+confirmBack = function () {
+  if (G.mode === 'multi') {
+    if (G.phase !== 'over' && !confirm('Покинути онлайн-гру?')) return;
+    destroyPeer();
+    stopTimer();
+    showScreen('menuScreen');
+    return;
+  }
+  _confirmBack();
+};
+
+const _playAgain = playAgain;
+playAgain = function () {
+  if (G.mode === 'multi') {
+    if (isHost && conn && conn.open) {
+      startMultiGame();
+    } else {
+      showScreen('lobbyScreen');
+      setLobbyStatus(isHost ? 'Очікуйте суперника' : 'Очікуйте, поки хост почне нову гру', '');
+    }
+    return;
+  }
+  _playAgain();
+};
+
+// ═══════════════════════════════════════
+// ANIMATIONS
+// ═══════════════════════════════════════
+function renderAllWithDealAnim() {
+  dealingAnim = true;
+  renderOppHandDeal();
+  renderPlayerHandDeal();
+  renderTable();
+  renderPassCards();
+  updateTurnBadges();
+  setTimeout(() => { dealingAnim = false; }, 900);
+}
+
+function renderPlayerHandDeal() {
+  const el = document.getElementById('playerHand');
+  el.innerHTML = '';
+  G.playerHand.forEach((c, i) => {
+    let extra = ' deal-in';
+    if (G.selectedCard === i) extra += ' selected';
+    else if (!canPlay(c)) extra += ' dimmed';
+    const cd = renderCardEl(c, () => selectCard(i), extra);
+    cd.style.animationDelay = (i * 0.06) + 's';
+    el.appendChild(cd);
+  });
+}
+
+function renderOppHandDeal() {
+  const el = document.getElementById('oppHand');
+  el.innerHTML = '';
+  const n = G.oppHand.length;
+  for (let i = 0; i < n; i++) {
+    const cb = document.createElement('div');
+    cb.className = 'card-back deal-in';
+    cb.style.animationDelay = (i * 0.06) + 's';
+    el.appendChild(cb);
+  }
+}
+
+function launchConfetti() {
+  const colors = ['#c9a84c', '#e8c97a', '#e74c3c', '#4caf50', '#3498db', '#f5f0e8'];
+  for (let i = 0; i < 48; i++) {
+    const p = document.createElement('div');
+    p.className = 'confetti-piece';
+    p.style.left = Math.random() * 100 + 'vw';
+    p.style.background = colors[i % colors.length];
+    p.style.animationDuration = (1.5 + Math.random() * 2) + 's';
+    p.style.animationDelay = (Math.random() * 0.5) + 's';
+    p.style.transform = 'rotate(' + (Math.random() * 360) + 'deg)';
+    document.body.appendChild(p);
+    setTimeout(() => p.remove(), 4000);
+  }
+}
+
+// Shake invalid card
+const _selectCard = selectCard;
+selectCard = function (i) {
+  if (G.busy || G.phase === 'over') return;
+  const playerActing = (G.playerTurn && G.phase === 'attack') || (!G.playerTurn && G.phase === 'defense');
+  if (!playerActing) return;
+  if (!canPlay(G.playerHand[i])) {
+    // shake
+    const el = document.getElementById('playerHand');
+    const cards = el.querySelectorAll('.card');
+    if (cards[i]) {
+      cards[i].classList.remove('shake');
+      void cards[i].offsetWidth;
+      cards[i].classList.add('shake');
+    }
+    return;
+  }
+  _selectCard(i);
+};
 
 // ═══════════════════════════════════════
 // TOAST
@@ -1866,6 +2572,14 @@ function toast(msg) {
 document.getElementById('joinCodeInput').addEventListener('input', function () {
   this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
 });
+
+// Also use deal anim for AI games
+const _initGame = initGame;
+initGame = function () {
+  _initGame();
+  // re-render with deal animation
+  renderAllWithDealAnim();
+};
 </script>
 </body>
 </html>
